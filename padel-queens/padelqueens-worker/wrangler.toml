@@ -1,0 +1,14 @@
+name = "padelqueens-events-api"
+main = "src/index.js"
+compatibility_date = "2025-01-01"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "padelqueens-events"
+database_id = "52d74fb0-84f4-43ff-b998-dc7f7a67f1c5"
+
+# Ya conectado con tu dominio real (padelqueensclub.com).
+# Después de `wrangler login`, esta ruta queda activa con solo `wrangler deploy`:
+[[routes]]
+pattern = "api.padelqueensclub.com/*"
+custom_domain = true
