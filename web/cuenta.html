@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mi cuenta | Padel Queens</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,500&family=Sora:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="site.css">
+</head>
+<body>
+<div id="nav"></div>
+<main><div class="narrow">
+
+  <!-- Sin sesion -->
+  <section id="guest" class="hidden">
+    <span class="eyebrow">Mi cuenta</span>
+    <h1 class="title" id="guest-title">Entra a tu corona</h1>
+    <p class="lead" id="guest-lead">Inscríbete a los torneos con tu pareja, paga tu cupo y sigue el estado de tu inscripción.</p>
+
+    <div class="tabs" id="guest-tabs">
+      <button class="tab active" data-tab="login">Entrar</button>
+      <button class="tab" data-tab="register">Crear cuenta</button>
+    </div>
+
+    <form class="card" id="form-login">
+      <label class="field" for="l-email">Correo</label>
+      <input class="in" id="l-email" type="email" autocomplete="email" required>
+      <label class="field" for="l-pass">Contraseña</label>
+      <input class="in" id="l-pass" type="password" autocomplete="current-password" required>
+      <div class="actions"><button class="btn-primary" type="submit">Entrar</button>
+        <button class="btn-ghost" type="button" id="to-forgot">Olvidé mi contraseña</button></div>
+      <p class="msg" id="login-msg"></p>
+    </form>
+
+    <form class="card hidden" id="form-register">
+      <label class="field" for="r-nombre">Nombre y apellido</label>
+      <input class="in" id="r-nombre" autocomplete="name" required>
+      <label class="field" for="r-email">Correo</label>
+      <input class="in" id="r-email" type="email" autocomplete="email" required>
+      <div class="row2">
+        <div><label class="field" for="r-tel">Teléfono (opcional)</label><input class="in" id="r-tel" type="tel" autocomplete="tel"></div>
+        <div><label class="field" for="r-cat">Tu categoría (opcional)</label><select class="in" id="r-cat"></select></div>
+      </div>
+      <label class="field" for="r-pass">Contraseña (mínimo 8 caracteres)</label>
+      <input class="in" id="r-pass" type="password" autocomplete="new-password" minlength="8" required>
+      <div class="actions"><button class="btn-primary" type="submit">Crear mi cuenta</button></div>
+      <p class="msg" id="register-msg"></p>
+    </form>
+
+    <form class="card hidden" id="form-forgot">
+      <h3>Recuperar contraseña</h3>
+      <p class="muted">Te enviamos un enlace a tu correo para elegir una nueva.</p>
+      <label class="field" for="f-email">Correo</label>
+      <input class="in" id="f-email" type="email" required>
+      <div class="actions"><button class="btn-primary" type="submit">Enviar enlace</button>
+        <button class="btn-ghost" type="button" id="back-login">Volver</button></div>
+      <p class="msg" id="forgot-msg"></p>
+    </form>
+
+    <form class="card hidden" id="form-reset">
+      <h3>Elige tu nueva contraseña</h3>
+      <label class="field" for="n-pass">Nueva contraseña (mínimo 8 caracteres)</label>
+      <input class="in" id="n-pass" type="password" autocomplete="new-password" minlength="8" required>
+      <div class="actions"><button class="btn-primary" type="submit">Guardar contraseña</button></div>
+      <p class="msg" id="reset-msg"></p>
+    </form>
+  </section>
+
+  <!-- Con sesion -->
+  <section id="member" class="hidden">
+    <span class="eyebrow">Mi cuenta</span>
+    <h1 class="title" id="hello"></h1>
+    <p class="muted" id="who" style="margin-bottom:22px;"></p>
+
+    <div class="banner hidden" id="verify-banner">
+      Falta verificar tu correo. Revisa tu bandeja (y el spam) y toca el enlace que te enviamos.
+      <div class="actions"><button class="btn-ghost btn-sm" id="resend">Reenviar correo</button></div>
+      <p class="msg" id="verify-msg"></p>
+    </div>
+
+    <h2 class="sub">Mis inscripciones</h2>
+    <div id="regs"><p class="muted">Cargando…</p></div>
+    <div class="actions"><a class="btn-primary" href="index.html#calendario">Ver torneos</a>
+      <button class="btn-ghost" id="logout">Salir</button></div>
+  </section>
+
+</div></main>
+
+<script src="config.js"></script>
+<script src="app.js"></script>
+<script>
+document.getElementById("nav").innerHTML = NAV_HTML;
+const $ = (id) => document.getElementById(id);
+const params = new URLSearchParams(location.search);
+$("r-cat").innerHTML = '<option value="">Sin elegir</option>' + CATEGORIAS.map((c) => `<option>${c}</option>`).join("");
+
+function showForm(name) {
+  for (const f of ["login", "register", "forgot", "reset"]) $("form-" + f).classList.toggle("hidden", f !== name);
+  $("guest-tabs").classList.toggle("hidden", name === "forgot" || name === "reset");
+  document.querySelectorAll(".tab").forEach((t) => t.classList.toggle("active", t.dataset.tab === name));
+}
+document.querySelectorAll(".tab").forEach((t) => t.addEventListener("click", () => showForm(t.dataset.tab)));
+$("to-forgot").addEventListener("click", () => showForm("forgot"));
+$("back-login").addEventListener("click", () => showForm("login"));
+
+function afterLogin(data) { Session.set(data.token); const next = params.get("next"); location.href = next && /^[\w./?=&-]+$/.test(next) ? next : "cuenta.html"; }
+
+$("form-login").addEventListener("submit", async (e) => {
+  e.preventDefault(); setMsg($("login-msg"), "Entrando…");
+  try { afterLogin(await api("POST", "/api/auth/login", { email: $("l-email").value, password: $("l-pass").value })); }
+  catch (err) { setMsg($("login-msg"), err.message, true); }
+});
+$("form-register").addEventListener("submit", async (e) => {
+  e.preventDefault(); setMsg($("register-msg"), "Creando tu cuenta…");
+  try {
+    afterLogin(await api("POST", "/api/auth/register", {
+      nombre: $("r-nombre").value, email: $("r-email").value, telefono: $("r-tel").value,
+      categoria: $("r-cat").value, password: $("r-pass").value,
+    }));
+  } catch (err) { setMsg($("register-msg"), err.message, true); }
+});
+$("form-forgot").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  try { await api("POST", "/api/auth/forgot", { email: $("f-email").value }); setMsg($("forgot-msg"), "Si ese correo tiene cuenta, te enviamos el enlace."); }
+  catch (err) { setMsg($("forgot-msg"), err.message, true); }
+});
+$("form-reset").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  try {
+    await api("POST", "/api/auth/reset", { token: params.get("reset"), password: $("n-pass").value });
+    history.replaceState(null, "", "cuenta.html"); showForm("login"); $("guest-tabs").classList.remove("hidden");
+    setMsg($("login-msg"), "Contraseña actualizada. Ya puedes entrar.");
+  } catch (err) { setMsg($("reset-msg"), err.message, true); }
+});
+$("logout").addEventListener("click", () => { Session.clear(); location.href = "cuenta.html"; });
+$("resend").addEventListener("click", async () => {
+  try { await api("POST", "/api/auth/resend-verification"); setMsg($("verify-msg"), "Listo, revisa tu correo."); }
+  catch (err) { setMsg($("verify-msg"), err.message, true); }
+});
+
+const PAGO = { pagado: ["ok", "Pagado"], parcial: ["warn", "Pago parcial"], pendiente: ["bad", "Pago pendiente"] };
+
+function regCard(r) {
+  const [cls, label] = PAGO[r.pago_estado];
+  let body = "";
+  if (r.estado === "pendiente" && r.rol === "invitada") {
+    body = `<div class="banner">${esc(r.companera.nombre)} te invitó a jugar en pareja. ¿Aceptas?</div>
+      <div class="actions"><button class="btn-primary btn-sm" data-act="confirm">Aceptar</button>
+      <button class="btn-ghost btn-sm" data-act="cancel">Rechazar</button></div>`;
+  } else if (r.estado === "pendiente") {
+    body = `<p class="muted">Esperando que ${esc(r.companera.nombre)} acepte la invitación. Podrán pagar cuando la pareja esté confirmada.</p>
+      <div class="actions"><button class="btn-ghost btn-sm" data-act="cancel">Cancelar inscripción</button></div>`;
+  } else {
+    body = `<p class="muted">Pagado ${rd(r.pagado)} de ${r.total == null ? "…" : rd(r.total)}.
+      ${r.tu_parte_cubierta ? "Tu parte está cubierta." : ""}</p>`;
+    const pend = r.pagos.find((p) => p.estado === "pendiente" && p.pagadora_es_tu);
+    if (pend) body += `<div class="banner">Tienes un pago de ${rd(pend.monto)} en espera. Cuando lo confirmemos, aquí cambia a pagado. Esto puede tardar un poco.</div>`;
+    if (r.opciones_pago.length) {
+      body += `<div class="paybox"><b>Pagar mi inscripción</b>` + r.opciones_pago.map((o, i) => `
+        <label class="radio"><input type="radio" name="cubre-${r.id}" value="${o.cubre}" ${i === 0 ? "checked" : ""}>
+        <span>${o.cubre === "propia" ? "Solo mi parte" : "Las dos (mi parte y la de " + esc(r.companera.nombre) + ")"}: <b>${rd(o.monto)}</b></span></label>`).join("") +
+        `<div class="actions"><button class="btn-primary btn-sm" data-act="pay">Ir a pagar</button></div></div>`;
+    }
+    if (r.pago_estado !== "pagado") body += `<div class="actions"><button class="btn-ghost btn-sm" data-act="cancel">Cancelar inscripción</button></div>`;
+  }
+  return `<div class="card" data-id="${r.id}">
+    <h3>${esc(r.event_title)}</h3>
+    <p class="muted" style="margin-bottom:10px;">${esc(r.date_label)} ${esc(r.date_sub)} · Categoría ${esc(r.categoria)} · Pareja: ${esc(r.companera.nombre)}</p>
+    <span class="pill ${r.estado === "confirmada" ? "ok" : "warn"}">${r.estado === "confirmada" ? "PAREJA CONFIRMADA" : "PAREJA PENDIENTE"}</span>
+    ${r.estado === "confirmada" ? `<span class="pill ${cls}">${label.toUpperCase()}</span>` : ""}
+    <div style="margin-top:12px;">${body}</div><p class="msg" data-msg></p></div>`;
+}
+
+async function loadRegs() {
+  const box = $("regs");
+  try {
+    const regs = await api("GET", "/api/me/registrations");
+    box.innerHTML = regs.length ? regs.map(regCard).join("") : '<p class="muted" style="margin-bottom:18px;">Todavía no tienes inscripciones.</p>';
+  } catch (err) { box.innerHTML = `<p class="msg err">${esc(err.message)}</p>`; }
+}
+
+$("regs").addEventListener("click", async (e) => {
+  const btn = e.target.closest("[data-act]");
+  if (!btn) return;
+  const card = btn.closest(".card"), id = card.dataset.id, msg = card.querySelector("[data-msg]");
+  const act = btn.dataset.act;
+  if (act === "cancel" && !confirm("¿Seguro que quieres cancelar esta inscripción?")) return;
+  btn.disabled = true;
+  try {
+    if (act === "pay") {
+      const cubre = card.querySelector(`input[name="cubre-${id}"]:checked`).value;
+      const r = await api("POST", `/api/registrations/${id}/pay`, { cubre });
+      location.href = r.pay_url;
+      return;
+    }
+    await api("POST", `/api/registrations/${id}/${act}`);
+    await loadRegs();
+  } catch (err) { setMsg(msg, err.message, true); btn.disabled = false; }
+});
+
+(async function init() {
+  if (params.get("verify")) {
+    try { await api("POST", "/api/auth/verify", { token: params.get("verify") }); history.replaceState(null, "", "cuenta.html"); alert("Correo verificado. ¡Gracias!"); }
+    catch (err) { history.replaceState(null, "", "cuenta.html"); alert(err.message); }
+  }
+  const me = await loadMe();
+  renderNav(me);
+  if (!me) {
+    $("guest").classList.remove("hidden");
+    if (params.get("reset")) { $("guest-title").textContent = "Nueva contraseña"; $("guest-lead").textContent = ""; showForm("reset"); }
+    return;
+  }
+  $("member").classList.remove("hidden");
+  $("hello").textContent = `Hola, ${me.nombre.split(" ")[0]}`;
+  $("who").textContent = `${me.email}${me.categoria ? " · Categoría " + me.categoria : ""}`;
+  $("verify-banner").classList.toggle("hidden", me.email_verified);
+  loadRegs();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex">
+<title>Admin | Padel Queens</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,500&family=Sora:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="site.css">
+</head>
+<body>
+<div id="nav"></div>
+<main><div class="wrap">
+  <div id="denied" class="hidden narrow">
+    <h1 class="title">Solo administradoras</h1>
+    <p class="lead">Entra con una cuenta de administradora para gestionar los eventos.</p>
+    <a class="btn-primary" href="cuenta.html?next=admin.html">Entrar</a>
+  </div>
+
+  <div id="panel" class="hidden">
+    <span class="eyebrow">Administración</span>
+    <h1 class="title">Eventos e inscripciones</h1>
+
+    <div class="card scroll-x">
+      <table class="t"><thead><tr><th>EVENTO</th><th>ESTADO</th><th>PRECIO</th><th>PAREJAS</th><th></th></tr></thead>
+      <tbody id="events"></tbody></table>
+    </div>
+
+    <div class="card hidden" id="regs-card">
+      <h3 id="regs-title">Inscripciones</h3>
+      <div class="scroll-x" id="regs"></div>
+    </div>
+
+    <div class="card">
+      <h3 id="form-title">Nuevo evento</h3>
+      <form id="form">
+        <input type="hidden" id="f-id">
+        <label class="field" for="f-title">Título</label><input class="in" id="f-title" required>
+        <div class="row2">
+          <div><label class="field" for="f-date-label">Fecha corta (ej. AGO 14)</label><input class="in" id="f-date-label"></div>
+          <div><label class="field" for="f-date-sub">Subtítulo de fecha (ej. PADELPOINT)</label><input class="in" id="f-date-sub"></div>
+        </div>
+        <label class="field" for="f-desc">Descripción</label><textarea class="in" id="f-desc" rows="3"></textarea>
+        <div class="row2">
+          <div><label class="field" for="f-tag">Etiqueta</label><input class="in" id="f-tag"></div>
+          <div><label class="field" for="f-estado">Estado</label>
+            <select class="in" id="f-estado">
+              <option value="borrador">Borrador (oculto)</option><option value="abierto" selected>Abierto</option>
+              <option value="cerrado">Cerrado</option><option value="en_juego">En juego</option><option value="finalizado">Finalizado</option>
+            </select></div>
+        </div>
+        <label class="radio"><input type="checkbox" id="f-live"><span>Resaltar como evento insignia (dorado)</span></label>
+        <div class="row2">
+          <div><label class="field" for="f-precio">Precio por jugadora, RD$ (vacío = sin inscripción)</label><input class="in" id="f-precio" type="number" min="0"></div>
+          <div><label class="field" for="f-cupo">Cupo máximo de parejas (vacío = sin límite)</label><input class="in" id="f-cupo" type="number" min="0"></div>
+        </div>
+        <label class="field" for="f-link1">Link de pago CardNet: una jugadora</label><input class="in" id="f-link1" placeholder="https://...">
+        <label class="field" for="f-link2">Link de pago CardNet: las dos jugadoras</label><input class="in" id="f-link2" placeholder="https://...">
+        <p class="muted" style="margin-top:8px;">Los links de CardNet tienen un monto fijo, por eso hay uno para cada opción. Crea el link de una jugadora por el precio y el de pareja por el doble.</p>
+        <div class="row2">
+          <div><label class="field" for="f-date">Fecha real (opcional)</label><input class="in" id="f-date" type="date"></div>
+          <div><label class="field" for="f-order">Orden en la lista</label><input class="in" id="f-order" type="number" value="0"></div>
+        </div>
+        <div class="actions"><button class="btn-primary" type="submit">Guardar evento</button>
+          <button class="btn-ghost hidden" type="button" id="cancel">Cancelar edición</button></div>
+        <p class="msg" id="msg"></p>
+      </form>
+    </div>
+  </div>
+</div></main>
+
+<script src="config.js"></script>
+<script src="app.js"></script>
+<script>
+document.getElementById("nav").innerHTML = NAV_HTML;
+const $ = (id) => document.getElementById(id);
+let events = [];
+const ESTADO_LABEL = { borrador: "Borrador", abierto: "Abierto", cerrado: "Cerrado", en_juego: "En juego", finalizado: "Finalizado" };
+
+function renderEvents() {
+  $("events").innerHTML = events.map((e) => `<tr>
+    <td><b>${esc(e.title)}</b><br><span class="muted">${esc(e.date_label)} ${esc(e.date_sub)}</span></td>
+    <td>${esc(ESTADO_LABEL[e.estado] || e.estado)}</td>
+    <td>${e.precio == null ? '<span class="muted">sin inscripción</span>' : rd(e.precio)}</td>
+    <td>${e.cupos_ocupados}${e.cupo_max != null ? " / " + e.cupo_max : ""}</td>
+    <td><div class="actions" style="margin:0;"><button class="btn-ghost btn-sm" data-regs="${e.id}">Inscripciones</button>
+      <button class="btn-ghost btn-sm" data-edit="${e.id}">Editar</button>
+      <button class="btn-ghost btn-sm" data-del="${e.id}">Borrar</button></div></td></tr>`).join("");
+}
+async function loadEvents() { events = await api("GET", "/api/admin/events"); renderEvents(); }
+
+function fill(e) {
+  $("form-title").textContent = e ? "Editar evento" : "Nuevo evento";
+  $("f-id").value = e ? e.id : "";
+  $("f-title").value = e?.title ?? ""; $("f-date-label").value = e?.date_label ?? ""; $("f-date-sub").value = e?.date_sub ?? "";
+  $("f-desc").value = e?.description ?? ""; $("f-tag").value = e?.tag ?? ""; $("f-estado").value = e?.estado ?? "abierto";
+  $("f-live").checked = !!e?.tag_live; $("f-precio").value = e?.precio ?? ""; $("f-cupo").value = e?.cupo_max ?? "";
+  $("f-link1").value = e?.pay_link ?? ""; $("f-link2").value = e?.pay_link_pareja ?? "";
+  $("f-date").value = e?.event_date ?? ""; $("f-order").value = e?.sort_order ?? 0;
+  $("cancel").classList.toggle("hidden", !e);
+  if (e) $("form").scrollIntoView({ behavior: "smooth" });
+}
+
+$("cancel").addEventListener("click", () => fill(null));
+$("form").addEventListener("submit", async (ev) => {
+  ev.preventDefault(); setMsg($("msg"), "Guardando…");
+  const id = $("f-id").value;
+  const body = {
+    title: $("f-title").value, date_label: $("f-date-label").value, date_sub: $("f-date-sub").value, description: $("f-desc").value,
+    tag: $("f-tag").value, tag_live: $("f-live").checked, estado: $("f-estado").value, precio: $("f-precio").value, cupo_max: $("f-cupo").value,
+    pay_link: $("f-link1").value, pay_link_pareja: $("f-link2").value, event_date: $("f-date").value, sort_order: $("f-order").value,
+  };
+  try {
+    await api(id ? "PUT" : "POST", id ? `/api/admin/events/${id}` : "/api/admin/events", body);
+    setMsg($("msg"), "Guardado"); fill(null); await loadEvents();
+  } catch (err) { setMsg($("msg"), err.message, true); }
+});
+
+async function showRegs(eventId) {
+  $("regs-card").classList.remove("hidden");
+  $("regs").innerHTML = '<p class="muted">Cargando…</p>';
+  try {
+    const d = await api("GET", `/api/admin/events/${eventId}/registrations`);
+    $("regs-title").textContent = `Inscripciones: ${d.event.title}`;
+    $("regs").dataset.event = eventId;
+    if (!d.registrations.length) { $("regs").innerHTML = '<p class="muted">Todavía no hay inscripciones.</p>'; return; }
+    const PAGO = { pagado: "ok", parcial: "warn", pendiente: "bad" };
+    $("regs").innerHTML = `<table class="t"><thead><tr><th>CAT.</th><th>PAREJA</th><th>ESTADO</th><th>PAGOS</th></tr></thead><tbody>` +
+      d.registrations.filter((r) => r.estado !== "cancelada").map((r) => `<tr>
+        <td>${esc(r.categoria)}</td>
+        <td>${esc(r.p1_nombre)} <span class="muted">${esc(r.p1_email)} ${esc(r.p1_tel || "")}</span><br>
+            ${esc(r.p2_nombre)} <span class="muted">${esc(r.p2_email)} ${esc(r.p2_tel || "")}</span></td>
+        <td><span class="pill ${r.estado === "confirmada" ? "ok" : "warn"}">${esc(r.estado.toUpperCase())}</span>
+            <span class="pill ${PAGO[r.pago_estado]}">${esc(r.pago_estado.toUpperCase())}</span></td>
+        <td>${r.pagos.length ? r.pagos.map((p) => `<div style="margin-bottom:8px;">${esc(p.pagadora)}: ${rd(p.monto)} (${p.cubre === "ambas" ? "las dos" : "su parte"}) ·
+          ${p.estado === "pagado" ? `<span class="pill ok">PAGADO</span><button class="btn-ghost btn-sm" data-pay="${p.id}" data-do="mark-pending">Deshacer</button>`
+            : `<span class="pill warn">PENDIENTE</span><button class="btn-primary btn-sm" data-pay="${p.id}" data-do="mark-paid">Marcar pagado</button>`}</div>`).join("") : '<span class="muted">Sin pagos iniciados</span>'}</td></tr>`).join("") + "</tbody></table>";
+  } catch (err) { $("regs").innerHTML = `<p class="msg err">${esc(err.message)}</p>`; }
+}
+
+$("regs").addEventListener("click", async (e) => {
+  const b = e.target.closest("[data-pay]"); if (!b) return;
+  let body;
+  if (b.dataset.do === "mark-paid") {
+    const ref = prompt("Referencia de CardNet (opcional):"); if (ref === null) return;
+    body = { referencia: ref };
+  }
+  b.disabled = true;
+  try { await api("POST", `/api/admin/payments/${b.dataset.pay}/${b.dataset.do}`, body); showRegs($("regs").dataset.event); }
+  catch (err) { alert(err.message); b.disabled = false; }
+});
+
+$("events").addEventListener("click", async (e) => {
+  const b = e.target.closest("button"); if (!b) return;
+  if (b.dataset.regs) showRegs(b.dataset.regs);
+  if (b.dataset.edit) fill(events.find((x) => String(x.id) === b.dataset.edit));
+  if (b.dataset.del && confirm("¿Borrar este evento?")) {
+    try { await api("DELETE", `/api/admin/events/${b.dataset.del}`); await loadEvents(); } catch (err) { alert(err.message); }
+  }
+});
+
+(async function () {
+  const me = await loadMe();
+  renderNav(me);
+  if (!me || me.role !== "admin") { $("denied").classList.remove("hidden"); return; }
+  $("panel").classList.remove("hidden");
+  loadEvents();
+})();
+</script>
+</body>
+</html>

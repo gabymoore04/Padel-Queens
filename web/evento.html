@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Evento | Padel Queens</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,500&family=Sora:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="site.css">
+</head>
+<body>
+<div id="nav"></div>
+<main><div class="narrow">
+  <div id="event"><p class="muted">Cargando…</p></div>
+  <section id="signup" class="hidden">
+    <h2 class="sub">Inscribe a tu pareja</h2>
+    <form class="card" id="form">
+      <p class="muted">Tu compañera debe tener cuenta en Padel Queens. Le llegará un correo para confirmar, y después podrán pagar.</p>
+      <label class="field" for="partner">Correo de tu compañera</label>
+      <input class="in" id="partner" type="email" required>
+      <label class="field" for="cat">Categoría de la pareja</label>
+      <select class="in" id="cat" required></select>
+      <div class="actions"><button class="btn-primary" type="submit">Inscribirnos</button></div>
+      <p class="msg" id="msg"></p>
+    </form>
+  </section>
+  <section id="gate" class="hidden"></section>
+</div></main>
+
+<script src="config.js"></script>
+<script src="app.js"></script>
+<script>
+document.getElementById("nav").innerHTML = NAV_HTML;
+const $ = (id) => document.getElementById(id);
+const id = new URLSearchParams(location.search).get("id");
+$("cat").innerHTML = '<option value="">Elige una categoría</option>' + CATEGORIAS.map((c) => `<option>${c}</option>`).join("");
+
+(async function () {
+  const me = await loadMe();
+  renderNav(me);
+  let ev;
+  try { ev = await api("GET", `/api/events/${encodeURIComponent(id)}`); }
+  catch (err) { $("event").innerHTML = `<p class="msg err">${esc(err.message)}</p>`; return; }
+  document.title = `${ev.title} | Padel Queens`;
+  const cupos = ev.cupo_max != null ? `${Math.max(ev.cupo_max - ev.cupos_ocupados, 0)} cupos de ${ev.cupo_max}` : "";
+  $("event").innerHTML = `
+    <span class="eyebrow">${esc(ev.date_label)} ${esc(ev.date_sub)}</span>
+    <h1 class="title">${esc(ev.title)}</h1>
+    <p class="lead">${esc(ev.description)}</p>
+    <div style="margin-bottom:26px;">
+      ${ev.tag ? `<span class="pill ${ev.tag_live ? "warn" : ""}">${esc(ev.tag)}</span>` : ""}
+      ${ev.precio != null ? `<span class="pill">${rd(ev.precio)} POR JUGADORA</span>` : ""}
+      ${cupos ? `<span class="pill">${esc(cupos.toUpperCase())}</span>` : ""}
+    </div>`;
+  if (ev.registrable) {
+    if (!me) {
+      $("gate").classList.remove("hidden");
+      $("gate").innerHTML = `<div class="card"><h3>Para inscribirte necesitas una cuenta</h3>
+        <p class="muted">Tu compañera también debe tenerla.</p>
+        <div class="actions"><a class="btn-primary" href="cuenta.html?next=${encodeURIComponent("evento.html?id=" + id)}">Entrar o crear cuenta</a></div></div>`;
+    } else if (!me.email_verified) {
+      $("gate").classList.remove("hidden");
+      $("gate").innerHTML = `<div class="banner">Verifica tu correo para inscribirte. Puedes reenviarlo desde <a href="cuenta.html" style="color:var(--gold-soft);text-decoration:underline;">Mi cuenta</a>.</div>`;
+    } else {
+      $("signup").classList.remove("hidden");
+      if (me.categoria) $("cat").value = me.categoria;
+    }
+  } else {
+    $("gate").classList.remove("hidden");
+    $("gate").innerHTML = `<div class="banner">${ev.lleno ? "Este evento ya está lleno." : "Las inscripciones de este evento no están abiertas por ahora."}</div>`;
+  }
+  $("form").addEventListener("submit", async (e) => {
+    e.preventDefault(); setMsg($("msg"), "Enviando…");
+    try {
+      await api("POST", `/api/events/${id}/registrations`, { partner_email: $("partner").value, categoria: $("cat").value });
+      location.href = "cuenta.html";
+    } catch (err) { setMsg($("msg"), err.message, true); }
+  });
+})();
+</script>
+</body>
+</html>

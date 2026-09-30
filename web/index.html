@@ -273,47 +273,6 @@
   }
   .pay-btn.pending:hover{transform:none; background:rgba(201,161,59,0.08);}
 
-  /* ---------- ADMIN ---------- */
-  .admin-fab{
-    position:fixed; bottom:22px; right:22px; z-index:200;
-    width:46px; height:46px; border-radius:50%;
-    background:var(--navy-light); border:1px solid rgba(227,200,119,0.35);
-    color:var(--gold-soft); font-size:1.1rem;
-    display:flex; align-items:center; justify-content:center;
-    cursor:pointer; box-shadow:0 8px 20px rgba(0,0,0,0.35);
-  }
-  .admin-overlay{
-    position:fixed; inset:0; z-index:300; background:rgba(6,8,30,0.7);
-    display:none; align-items:center; justify-content:center; padding:20px;
-  }
-  .admin-overlay.open{display:flex;}
-  .admin-modal{
-    background:var(--navy); border:1px solid var(--line); border-radius:16px;
-    padding:28px; width:100%; max-width:420px; max-height:86vh; overflow-y:auto;
-  }
-  .admin-modal h3{font-family:'Sora'; font-weight:800; margin-bottom:16px; color:var(--white);}
-  .admin-modal input, .admin-modal textarea{
-    width:100%; background:var(--navy-deep); border:1px solid var(--line); color:var(--cream);
-    padding:10px 12px; border-radius:8px; font-family:'Sora'; font-size:0.88rem; margin-bottom:10px;
-  }
-  .admin-modal label{font-size:0.72rem; color:var(--gold-soft); letter-spacing:0.05em; display:block; margin-bottom:4px;}
-  .admin-row{display:flex; gap:16px; margin-bottom:8px;}
-  .admin-check{display:flex; align-items:center; gap:8px; font-size:0.85rem; color:var(--cream); margin-bottom:14px;}
-  .admin-modal .btn-primary{width:100%; text-align:center; display:block; border:none; cursor:pointer; margin-bottom:10px;}
-  .admin-close{background:none; border:none; color:var(--cream); opacity:0.6; float:right; font-size:1.2rem; cursor:pointer;}
-  .admin-event-item{
-    border:1px solid var(--line); border-radius:10px; padding:12px; margin-bottom:10px;
-    display:flex; justify-content:space-between; align-items:center; gap:10px;
-  }
-  .admin-event-item span{font-size:0.86rem;}
-  .admin-event-item .actions{display:flex; gap:8px; flex-shrink:0;}
-  .admin-event-item button{
-    background:none; border:1px solid var(--line); color:var(--cream); border-radius:6px;
-    padding:5px 9px; font-size:0.75rem; cursor:pointer;
-  }
-  .admin-event-item button:hover{border-color:var(--gold-soft); color:var(--gold-soft);}
-  .admin-msg{font-size:0.8rem; color:var(--gold-soft); min-height:18px; margin-bottom:8px;}
-
   @media(max-width:700px){
     .event-row{grid-template-columns:1fr; gap:14px;}
     .event-side{align-items:flex-start;}
@@ -450,6 +409,7 @@
       <a href="#calendario">Calendario</a>
       <a href="#galeria">Galería</a>
       <a href="#partners">Partners</a>
+      <a href="cuenta.html">Mi cuenta</a>
     </nav>
     <a class="nav-cta" href="#join">Únete</a>
   </div>
@@ -598,53 +558,8 @@
   <p class="copy">Padel Queens: We play. We grow. We rise.</p>
 </footer>
 
-<button class="admin-fab" id="admin-fab" title="Admin">⚙</button>
-
-<div class="admin-overlay" id="admin-overlay">
-  <div class="admin-modal">
-    <button class="admin-close" id="admin-close">×</button>
-
-    <div id="admin-login-view">
-      <h3>Acceso administrador</h3>
-      <p class="admin-msg" id="login-msg"></p>
-      <input type="password" id="admin-code-input" placeholder="Código de administrador">
-      <button class="btn-primary" id="admin-login-btn">Entrar</button>
-    </div>
-
-    <div id="admin-panel-view" style="display:none;">
-      <h3>Gestionar eventos</h3>
-      <p class="admin-msg" id="panel-msg"></p>
-      <div id="admin-event-list"></div>
-      <hr style="border-color:var(--line); margin:18px 0;">
-      <h3 style="font-size:1rem;" id="form-title">Nuevo evento</h3>
-      <input type="hidden" id="event-id">
-      <label>Título</label>
-      <input id="f-title" placeholder="Ej: Court Sessions Vol. 2">
-      <div class="admin-row">
-        <div style="flex:1;">
-          <label>Fecha (corta)</label>
-          <input id="f-date-label" placeholder="Ej: AGO 14">
-        </div>
-        <div style="flex:1;">
-          <label>Subtítulo fecha</label>
-          <input id="f-date-sub" placeholder="Ej: PADELPOINT">
-        </div>
-      </div>
-      <label>Descripción</label>
-      <textarea id="f-description" rows="3" placeholder="Detalles del evento"></textarea>
-      <label>Etiqueta (tag)</label>
-      <input id="f-tag" placeholder="Ej: Doors 6 · Win 9">
-      <label class="admin-check"><input type="checkbox" id="f-tag-live"> Resaltar como evento insignia (dorado)</label>
-      <label>Link de pago (CardNet, opcional)</label>
-      <input id="f-pay-link" placeholder="https://...">
-      <button class="btn-primary" id="save-event-btn">Guardar evento</button>
-      <button class="btn-ghost" id="cancel-edit-btn" style="width:100%; text-align:center; display:none; margin-bottom:10px;">Cancelar edición</button>
-      <button class="btn-ghost" id="admin-logout-btn" style="width:100%; text-align:center;">Salir</button>
-    </div>
-  </div>
-</div>
-
 <script src="config.js"></script>
+<script src="app.js"></script>
 <script>
   const revealEls = document.querySelectorAll('.reveal');
   const io = new IntersectionObserver((entries)=>{
@@ -672,18 +587,25 @@
   const listEl = document.getElementById('event-list');
   const money = (s) => s || '';
 
+  function eventAction(e){
+    if(e.registrable) return `<a class="pay-btn" href="evento.html?id=${encodeURIComponent(e.id)}">Inscribirme</a>`;
+    if(e.lleno) return `<div class="event-tag">Cupos agotados</div>`;
+    if(e.pay_link && /^https?:\/\//i.test(e.pay_link)) return `<a class="pay-btn" href="${esc(e.pay_link)}" target="_blank" rel="noopener">Reservar mi cupo</a>`;
+    return '';
+  }
+
   function renderPublicEvents(events){
     if(!events || !events.length) return; // deja el respaldo estático si la API no responde
     listEl.innerHTML = events.map(e => `
       <div class="event-row reveal in">
-        <div class="event-date">${e.date_label}<span>${e.date_sub}</span></div>
+        <div class="event-date">${esc(e.date_label)}<span>${esc(e.date_sub)}</span></div>
         <div class="event-body">
-          <h3>${e.title}</h3>
-          <p>${e.description}</p>
+          <h3>${esc(e.title)}</h3>
+          <p>${esc(e.description)}</p>
         </div>
         <div class="event-side">
-          <div class="event-tag ${e.tag_live ? 'live' : ''}">${e.tag}</div>
-          ${e.pay_link ? `<a class="pay-btn" href="${e.pay_link}" target="_blank" rel="noopener">Reservar mi cupo</a>` : ''}
+          ${e.tag ? `<div class="event-tag ${e.tag_live ? 'live' : ''}">${esc(e.tag)}</div>` : ''}
+          ${eventAction(e)}
         </div>
       </div>
     `).join('');
@@ -693,142 +615,13 @@
     try{
       const res = await fetch(`${API_BASE}/api/events`);
       if(!res.ok) return;
-      const events = await res.json();
-      renderPublicEvents(events);
-      if(adminToken) renderAdminEventList(events);
+      renderPublicEvents(await res.json());
     }catch(err){
       // Sin conexión con la API todavía (o API_BASE sin configurar): se queda el respaldo estático.
     }
   }
   loadEvents();
 
-  // ================== ADMIN ==================
-  let adminToken = sessionStorage.getItem('pq_admin_token') || null;
-
-  const fab = document.getElementById('admin-fab');
-  const overlay = document.getElementById('admin-overlay');
-  const loginView = document.getElementById('admin-login-view');
-  const panelView = document.getElementById('admin-panel-view');
-  const loginMsg = document.getElementById('login-msg');
-  const panelMsg = document.getElementById('panel-msg');
-
-  function openAdmin(){
-    overlay.classList.add('open');
-    if(adminToken){ showPanel(); } else { showLogin(); }
-  }
-  function closeAdmin(){ overlay.classList.remove('open'); }
-  function showLogin(){ loginView.style.display='block'; panelView.style.display='none'; loginMsg.textContent=''; }
-  function showPanel(){
-    loginView.style.display='none'; panelView.style.display='block';
-    loadEvents();
-  }
-
-  fab.addEventListener('click', openAdmin);
-  document.getElementById('admin-close').addEventListener('click', closeAdmin);
-  overlay.addEventListener('click', (e)=>{ if(e.target === overlay) closeAdmin(); });
-
-  document.getElementById('admin-login-btn').addEventListener('click', async ()=>{
-    const code = document.getElementById('admin-code-input').value;
-    if(!code) return;
-    try{
-      const res = await fetch(`${API_BASE}/api/admin/login`, {
-        method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({code})
-      });
-      const data = await res.json();
-      if(!res.ok){ loginMsg.textContent = data.error || 'Código incorrecto'; return; }
-      adminToken = data.token;
-      sessionStorage.setItem('pq_admin_token', adminToken);
-      showPanel();
-    }catch(err){
-      loginMsg.textContent = 'No se pudo conectar con la API. ¿Ya desplegaste el Worker y configuraste API_BASE?';
-    }
-  });
-
-  document.getElementById('admin-logout-btn').addEventListener('click', ()=>{
-    adminToken = null;
-    sessionStorage.removeItem('pq_admin_token');
-    closeAdmin();
-  });
-
-  function renderAdminEventList(events){
-    const wrap = document.getElementById('admin-event-list');
-    wrap.innerHTML = events.map(e => `
-      <div class="admin-event-item">
-        <span>${e.date_label} · ${e.title}</span>
-        <div class="actions">
-          <button data-edit="${e.id}">Editar</button>
-          <button data-del="${e.id}">Borrar</button>
-        </div>
-      </div>
-    `).join('');
-    wrap.querySelectorAll('[data-edit]').forEach(btn=>{
-      btn.addEventListener('click', ()=>{
-        const ev = events.find(x => String(x.id) === btn.dataset.edit);
-        fillForm(ev);
-      });
-    });
-    wrap.querySelectorAll('[data-del]').forEach(btn=>{
-      btn.addEventListener('click', async ()=>{
-        if(!confirm('¿Borrar este evento?')) return;
-        await fetch(`${API_BASE}/api/admin/events/${btn.dataset.del}`, {
-          method:'DELETE', headers:{'Authorization':`Bearer ${adminToken}`}
-        });
-        loadEvents();
-      });
-    });
-  }
-
-  function fillForm(ev){
-    document.getElementById('form-title').textContent = 'Editar evento';
-    document.getElementById('event-id').value = ev.id;
-    document.getElementById('f-title').value = ev.title;
-    document.getElementById('f-date-label').value = ev.date_label;
-    document.getElementById('f-date-sub').value = ev.date_sub;
-    document.getElementById('f-description').value = ev.description;
-    document.getElementById('f-tag').value = ev.tag;
-    document.getElementById('f-tag-live').checked = !!ev.tag_live;
-    document.getElementById('f-pay-link').value = ev.pay_link || '';
-    document.getElementById('cancel-edit-btn').style.display = 'block';
-  }
-  function clearForm(){
-    document.getElementById('form-title').textContent = 'Nuevo evento';
-    ['event-id','f-title','f-date-label','f-date-sub','f-description','f-tag','f-pay-link'].forEach(id=>{
-      document.getElementById(id).value = '';
-    });
-    document.getElementById('f-tag-live').checked = false;
-    document.getElementById('cancel-edit-btn').style.display = 'none';
-  }
-  document.getElementById('cancel-edit-btn').addEventListener('click', clearForm);
-
-  document.getElementById('save-event-btn').addEventListener('click', async ()=>{
-    const id = document.getElementById('event-id').value;
-    const payload = {
-      title: document.getElementById('f-title').value,
-      date_label: document.getElementById('f-date-label').value,
-      date_sub: document.getElementById('f-date-sub').value,
-      description: document.getElementById('f-description').value,
-      tag: document.getElementById('f-tag').value,
-      tag_live: document.getElementById('f-tag-live').checked,
-      pay_link: document.getElementById('f-pay-link').value,
-      sort_order: 0
-    };
-    if(!payload.title){ panelMsg.textContent = 'Ponle al menos un título.'; return; }
-    panelMsg.textContent = 'Guardando…';
-    try{
-      const url = id ? `${API_BASE}/api/admin/events/${id}` : `${API_BASE}/api/admin/events`;
-      const method = id ? 'PUT' : 'POST';
-      const res = await fetch(url, {
-        method, headers:{'Content-Type':'application/json', 'Authorization':`Bearer ${adminToken}`},
-        body: JSON.stringify(payload)
-      });
-      if(!res.ok){ panelMsg.textContent = 'No se pudo guardar.'; return; }
-      panelMsg.textContent = 'Guardado ✓';
-      clearForm();
-      loadEvents();
-    }catch(err){
-      panelMsg.textContent = 'Error de conexión con la API.';
-    }
-  });
 </script>
 
 </body>
