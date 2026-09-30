@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hazte Premium Member | Padel Queens</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,500&family=Sora:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="site.css">
+<style>
+.hero-p{text-align:center;padding-bottom:10px;}
+.hero-p .crownwrap{width:84px;height:84px;margin:0 auto 22px;border-radius:50%;background:var(--navy-light);border:1px solid rgba(227,200,119,.55);display:flex;align-items:center;justify-content:center;color:var(--gold-soft);}
+.hero-p .crown{width:44px;}
+.hero-p p.lead{margin-left:auto;margin-right:auto;}
+.gold{background:linear-gradient(95deg,var(--gold-soft),var(--gold) 60%);-webkit-background-clip:text;background-clip:text;color:transparent;}
+.benefits{list-style:none;display:grid;gap:12px;margin-top:10px;}
+.benefits li{display:flex;gap:12px;align-items:flex-start;line-height:1.5;}
+.benefits li:before{content:"";flex:none;width:9px;height:9px;margin-top:8px;border-radius:50%;background:var(--gold);}
+.plans{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin:26px 0;}
+@media(max-width:640px){.plans{grid-template-columns:1fr;}}
+.plan{background:var(--navy);border:1px solid var(--line);border-radius:18px;padding:30px;position:relative;}
+.plan.best{border-color:var(--gold);box-shadow:0 0 0 1px rgba(201,161,59,.3);}
+.plan .flag{position:absolute;top:-12px;left:24px;background:var(--gold);color:var(--navy-deep);font-size:.68rem;font-weight:800;letter-spacing:.1em;padding:5px 12px;border-radius:999px;}
+.plan h3{font-family:'Fraunces',serif;font-weight:600;font-size:1.4rem;color:#fff;}
+.price{font-weight:800;font-size:2.8rem;color:var(--gold-soft);margin:12px 0 4px;letter-spacing:-.02em;}
+.price small{font-size:.9rem;font-weight:600;opacity:.7;letter-spacing:0;}
+.steps{counter-reset:s;display:grid;gap:12px;margin-top:10px;}
+.steps li{list-style:none;display:flex;gap:14px;align-items:flex-start;line-height:1.5;}
+.steps li:before{counter-increment:s;content:counter(s);flex:none;width:28px;height:28px;border-radius:50%;border:1px solid var(--gold);color:var(--gold-soft);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.8rem;}
+</style>
+</head>
+<body>
+<div id="nav"></div>
+<main><div class="narrow">
+  <div class="hero-p">
+    <div class="crownwrap" id="crown"></div>
+    <span class="eyebrow">Membresía</span>
+    <h1 class="title">Hazte <span class="gold">Premium Member</span></h1>
+    <p class="lead">Forma parte del círculo de Padel Queens y lleva tu carnet digital, con tu nombre, tu categoría y un código QR que valida que es auténtico.</p>
+  </div>
+
+  <div class="banner hidden" id="status"></div>
+
+  <h2 class="sub">Beneficios</h2>
+  <div class="card"><ul class="benefits" id="benefits"></ul></div>
+
+  <h2 class="sub" style="margin-top:34px;">Elige tu plan</h2>
+  <div class="plans">
+    <div class="plan">
+      <h3>Mensual</h3>
+      <div class="price"><span id="p-m">10</span><small> USD / mes</small></div>
+      <p class="muted">Sin compromiso. Renuevas cuando quieras.</p>
+      <div class="actions"><button class="btn-ghost" data-plan="mensual">Quiero el plan mensual</button></div>
+    </div>
+    <div class="plan best">
+      <span class="flag" id="save"></span>
+      <h3>Anual</h3>
+      <div class="price"><span id="p-a">100</span><small> USD / año</small></div>
+      <p class="muted">Un solo pago por todo el año.</p>
+      <div class="actions"><button class="btn-primary" data-plan="anual">Quiero el plan anual</button></div>
+    </div>
+  </div>
+  <p class="msg" id="msg"></p>
+
+  <h2 class="sub" style="margin-top:34px;">Cómo funciona</h2>
+  <ol class="steps">
+    <li>Eliges tu plan y entras con tu cuenta de Padel Queens.</li>
+    <li>Pagas con un link seguro de CardNet.</li>
+    <li><span>Confirmamos tu pago y tu carnet aparece en <a href="carnet.html" style="color:var(--gold-soft);text-decoration:underline;">Mi carnet</a>.</span></li>
+  </ol>
+</div></main>
+
+<script src="config.js"></script>
+<script src="app.js"></script>
+<script>
+document.getElementById("nav").innerHTML = NAV_HTML;
+const $ = (id) => document.getElementById(id);
+$("crown").innerHTML = CROWN_SVG;
+
+(async function () {
+  const [me, c] = await Promise.all([loadMe(), loadPublicContent()]);
+  renderNav(me);
+  const pm = Number(c.membership_price_monthly) || 10, pa = Number(c.membership_price_annual) || 100;
+  $("p-m").textContent = pm; $("p-a").textContent = pa;
+  const save = pm * 12 - pa; $("save").textContent = save > 0 ? `AHORRAS US$${save}` : "MEJOR OPCIÓN";
+  const items = (c.benefits || "").split("\n").map((s) => s.trim()).filter(Boolean);
+  $("benefits").innerHTML = items.length ? items.map((b) => `<li>${esc(b)}</li>`).join("") : '<li style="opacity:.7;">Muy pronto anunciaremos todos los beneficios.</li>';
+
+  if (me) {
+    try {
+      const m = (await api("GET", "/api/me/membership")).membership;
+      if (m && m.estado === "activa") { $("status").classList.remove("hidden"); $("status").innerHTML = `Ya eres Premium Member hasta el <b>${esc(fechaLarga(m.vence))}</b>. Puedes renovar cuando quieras. <a href="carnet.html" style="color:var(--gold-soft);text-decoration:underline;">Ver mi carnet</a>`; }
+      else if (m && m.pendiente) { $("status").classList.remove("hidden"); $("status").innerHTML = `Tienes un pago de US$${esc(m.pendiente.monto_usd)} en espera de confirmación. Cuando lo confirmemos, tu carnet aparece en <a href="carnet.html" style="color:var(--gold-soft);text-decoration:underline;">Mi carnet</a>.`; }
+    } catch {}
+  }
+
+  document.querySelectorAll("[data-plan]").forEach((b) => b.addEventListener("click", async () => {
+    if (!me) { location.href = "cuenta.html?next=premium.html"; return; }
+    b.disabled = true; setMsg($("msg"), "Preparando tu pago…");
+    try { const r = await api("POST", "/api/membership", { plan: b.dataset.plan }); location.href = r.pay_url; }
+    catch (err) { setMsg($("msg"), err.message, true); b.disabled = false; }
+  }));
+})();
+</script>
+</body>
+</html>

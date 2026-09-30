@@ -79,6 +79,12 @@
       <p class="msg" id="verify-msg"></p>
     </div>
 
+    <div class="card" id="mem-card">
+      <h3>Membresía</h3>
+      <p class="muted" id="mem-text">Cargando…</p>
+      <div class="actions" id="mem-actions"></div>
+    </div>
+
     <h2 class="sub">Mis inscripciones</h2>
     <div id="regs"><p class="muted">Cargando…</p></div>
     <div class="actions"><a class="btn-primary" href="index.html#calendario">Ver torneos</a>
@@ -216,6 +222,20 @@ $("regs").addEventListener("click", async (e) => {
   $("who").textContent = `${me.email}${me.categoria ? " · Categoría " + me.categoria : ""}`;
   $("verify-banner").classList.toggle("hidden", me.email_verified);
   loadRegs();
+  try {
+    const m = (await api("GET", "/api/me/membership")).membership;
+    const acts = $("mem-actions");
+    if (m && m.estado === "activa") {
+      $("mem-text").textContent = `Premium Member ${m.numero}, activa hasta el ${fechaLarga(m.vence)}.`;
+      acts.innerHTML = '<a class="btn-primary btn-sm" href="carnet.html">Ver mi carnet</a><a class="btn-ghost btn-sm" href="premium.html">Renovar</a>';
+    } else if (m && m.pendiente) {
+      $("mem-text").textContent = "Tu pago de membresía está en espera de confirmación.";
+      acts.innerHTML = '<a class="btn-ghost btn-sm" href="premium.html">Ver planes</a>';
+    } else {
+      $("mem-text").textContent = m ? "Tu membresía venció. Renuévala para volver a usar tu carnet." : "Hazte Premium Member y recibe tu carnet digital con código QR.";
+      acts.innerHTML = '<a class="btn-primary btn-sm" href="premium.html">Hazte Premium Member</a>';
+    }
+  } catch { $("mem-card").classList.add("hidden"); }
 })();
 </script>
 </body>

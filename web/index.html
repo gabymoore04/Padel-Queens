@@ -338,6 +338,17 @@
     .ig-grid{grid-template-columns:repeat(2,1fr);}
   }
 
+  /* ---------- PREMIUM ---------- */
+  .premium{padding:110px 0; border-top:1px solid var(--line); background:radial-gradient(ellipse at 50% 0%, rgba(201,161,59,0.12), transparent 60%);}
+  .premium .box{max-width:760px; margin:0 auto; text-align:center; border:1px solid rgba(227,200,119,0.4); border-radius:22px; padding:54px 34px; background:rgba(20,26,92,0.5);}
+  .premium h2{font-family:'Sora'; font-weight:800; font-size:clamp(2rem,4.6vw,3.2rem); color:var(--white); letter-spacing:-0.01em; margin-bottom:14px;}
+  .premium h2 em{font-style:normal; background:linear-gradient(95deg, var(--gold-soft), var(--gold) 60%); -webkit-background-clip:text; background-clip:text; color:transparent;}
+  .premium .lead{opacity:0.75; max-width:480px; margin:0 auto 28px; line-height:1.6;}
+  .premium ul{list-style:none; display:inline-grid; gap:12px; text-align:left; margin-bottom:34px;}
+  .premium li{display:flex; gap:12px; line-height:1.5;}
+  .premium li::before{content:""; flex:none; width:9px; height:9px; margin-top:8px; border-radius:50%; background:var(--gold);}
+  .premium .from{display:block; margin-top:16px; font-size:0.84rem; opacity:0.6;}
+
   /* ---------- PARTNERS MARQUEE ---------- */
   .partners{
     padding:70px 0;
@@ -415,6 +426,7 @@
       <a href="#manifesto">Universo</a>
       <a href="#calendario">Calendario</a>
       <a href="#galeria">Galería</a>
+      <a href="#premium">Premium</a>
       <a href="#partners">Partners</a>
       <a href="cuenta.html">Mi cuenta</a>
     </nav>
@@ -532,6 +544,19 @@
   </div>
 </section>
 
+<section class="premium" id="premium">
+  <div class="wrap">
+    <div class="box reveal">
+      <span class="label" style="font-size:0.78rem; letter-spacing:0.12em; color:var(--gold-soft); font-weight:700; display:block; margin-bottom:12px;">Membresía</span>
+      <h2>Hazte <em>Premium Member</em></h2>
+      <p class="lead">Un carnet digital con tu nombre, tu categoría y un código QR que valida que es auténtico, más todos los beneficios de ser parte del círculo Padel Queens.</p>
+      <ul id="premium-benefits"><li style="opacity:0.7;">Muy pronto anunciaremos todos los beneficios.</li></ul>
+      <div><a class="btn-primary" href="premium.html">Hazte Premium Member</a></div>
+      <span class="from" id="premium-from">Desde US$10 al mes o US$100 al año</span>
+    </div>
+  </div>
+</section>
+
 <section class="partners" id="partners">
   <div class="wrap">
     <p class="label-row">Con el apoyo de</p>
@@ -645,6 +670,10 @@
       const res = await fetch(`${API_BASE}/api/content`);
       if(!res.ok) return;
       const c = await res.json();
+      const items = (c.benefits || '').split('\n').map(x => x.trim()).filter(Boolean);
+      if(items.length) document.getElementById('premium-benefits').innerHTML = items.map(b => `<li>${esc(b)}</li>`).join('');
+      const pm = Number(c.membership_price_monthly), pa = Number(c.membership_price_annual);
+      if(pm || pa) document.getElementById('premium-from').textContent = `Desde US$${pm || 10} al mes o US$${pa || 100} al año`;
       document.querySelectorAll('[data-content]').forEach(el => { const v = c[el.dataset.content]; if(v) el.textContent = v; });
       document.querySelectorAll('[data-href]').forEach(el => { const v = c[el.dataset.href]; if(safeUrl(v)) el.href = v; });
     }catch(err){}

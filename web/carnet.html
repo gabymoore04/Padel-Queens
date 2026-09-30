@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mi carnet | Padel Queens</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,500&family=Sora:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="site.css">
+<style>
+.stage{max-width:760px;margin:0 auto;}
+/* Carnet diseño A. Todo se mide en cqw para escalar igual en celular y escritorio. */
+.card-wrap{container-type:inline-size;width:100%;}
+.pq-card{position:relative;width:100%;aspect-ratio:1000/630;overflow:hidden;border-radius:3.4cqw;color:var(--cream);
+  background:radial-gradient(ellipse at 18% 0%,#2b3396 0%,var(--navy) 38%,var(--navy-deep) 100%);box-shadow:0 24px 60px rgba(0,0,0,.45);}
+.pq-card:before{content:"";position:absolute;inset:1.6cqw;border:1.5px solid rgba(227,200,119,.55);border-radius:2.4cqw;}
+.pq-card .wm{position:absolute;right:-9cqw;top:-4cqw;width:56cqw;color:var(--gold);opacity:.08;}
+.pq-card .wm .crown{width:100%;}
+.pq-top{position:absolute;left:5.8cqw;top:5.4cqw;display:flex;align-items:center;gap:1.8cqw;}
+.pq-badge{width:7cqw;height:7cqw;border-radius:50%;background:var(--navy-light);border:1.5px solid rgba(227,200,119,.6);display:flex;align-items:center;justify-content:center;color:var(--gold-soft);}
+.pq-badge .crown{width:3.8cqw;}
+.pq-brand b{display:block;font-weight:800;letter-spacing:.14em;font-size:2.2cqw;color:#fff;}
+.pq-brand span{font-size:1.2cqw;letter-spacing:.3em;color:var(--gold-soft);font-weight:600;}
+.pq-tier{position:absolute;right:5.8cqw;top:6.2cqw;font-size:1.3cqw;font-weight:800;letter-spacing:.22em;color:var(--navy-deep);background:linear-gradient(95deg,var(--gold-soft),var(--gold));padding:.9cqw 1.8cqw;border-radius:999px;}
+.pq-tier.off{background:var(--clay);color:#fff;}
+.pq-id{position:absolute;left:5.8cqw;bottom:16.5cqw;max-width:62cqw;}
+.pq-name{font-weight:800;font-size:5.4cqw;color:#fff;letter-spacing:-.01em;line-height:1.05;}
+.pq-cat{margin-top:1.4cqw;font-family:'Fraunces',serif;font-style:italic;font-size:3cqw;color:var(--gold-soft);}
+.pq-meta{position:absolute;left:5.8cqw;bottom:6.2cqw;display:flex;gap:4.6cqw;}
+.pq-meta span{display:block;font-size:1.1cqw;letter-spacing:.22em;opacity:.6;margin-bottom:.6cqw;}
+.pq-meta b{font-size:2cqw;font-weight:700;letter-spacing:.06em;}
+.pq-qr{position:absolute;right:5.8cqw;bottom:5.4cqw;background:#fff;padding:1.4cqw;border-radius:1.8cqw;text-align:center;}
+.pq-qr svg{display:block;width:15.2cqw;height:15.2cqw;}
+.pq-qr i{display:block;font-style:normal;font-size:.9cqw;letter-spacing:.18em;color:var(--navy-deep);margin-top:.8cqw;font-weight:700;}
+.pq-card.inactive .pq-qr{opacity:.35;}
+@container (max-width:560px){
+  .pq-brand b{font-size:2.9cqw;} .pq-brand span{font-size:1.65cqw;} .pq-tier{font-size:1.75cqw;padding:1.1cqw 2.2cqw;}
+  .pq-id{bottom:17.5cqw;max-width:60cqw;} .pq-name{font-size:6.2cqw;} .pq-cat{font-size:3.9cqw;}
+  .pq-meta{gap:5.5cqw;bottom:5.6cqw;} .pq-meta span{font-size:1.95cqw;} .pq-meta b{font-size:2.9cqw;}
+  .pq-qr svg{width:17.5cqw;height:17.5cqw;} .pq-qr i{font-size:1.35cqw;}
+}
+.fine{font-size:.82rem;opacity:.6;line-height:1.6;margin-top:18px;}
+@media print{
+  body{background:#fff !important;}
+  header.nav,.noprint,.fine{display:none !important;}
+  main{padding:0 !important;}
+  .pq-card{box-shadow:none;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+}
+</style>
+</head>
+<body>
+<div id="nav"></div>
+<main><div class="wrap stage">
+  <div class="noprint">
+    <span class="eyebrow">Membresía</span>
+    <h1 class="title" style="margin-bottom:28px;">Mi carnet</h1>
+  </div>
+  <div id="content"><p class="muted">Cargando…</p></div>
+</div></main>
+
+<script src="config.js"></script>
+<script src="vendor/qrcode.js"></script>
+<script src="app.js"></script>
+<script>
+document.getElementById("nav").innerHTML = NAV_HTML;
+const $ = (id) => document.getElementById(id);
+
+function qrSvg(text) {
+  const q = qrcode(0, "M"); q.addData(text); q.make();
+  return q.createSvgTag({ cellSize: 4, margin: 0, scalable: true });
+}
+
+function cardHtml(m) {
+  const ok = m.estado === "activa";
+  const label = ok ? "PREMIUM MEMBER" : m.estado === "vencida" ? "VENCIDA" : "NO VIGENTE";
+  return `<div class="card-wrap"><div class="pq-card ${ok ? "" : "inactive"}">
+    <div class="wm">${CROWN_SVG}</div>
+    <div class="pq-top"><div class="pq-badge">${CROWN_SVG}</div><div class="pq-brand"><b>PADEL QUEENS</b><span>WE PLAY. WE GROW. WE RISE.</span></div></div>
+    <div class="pq-tier ${ok ? "" : "off"}">${label}</div>
+    <div class="pq-id"><div class="pq-name">${esc(m.nombre)}</div>
+    <div class="pq-cat">${m.categoria ? "Categoría " + esc(m.categoria) : "Jugadora"}</div></div>
+    <div class="pq-meta"><div><span>N° DE MIEMBRO</span><b>${esc(m.numero)}</b></div><div><span>VÁLIDA HASTA</span><b>${esc(fechaLarga(m.vence))}</b></div></div>
+    <div class="pq-qr">${qrSvg(m.verify_url)}<i>ESCANEA PARA VALIDAR</i></div>
+  </div></div>`;
+}
+
+(async function () {
+  const me = await loadMe();
+  renderNav(me);
+  const box = $("content");
+  if (!me) {
+    box.innerHTML = `<div class="card"><h3>Entra a tu cuenta para ver tu carnet</h3><div class="actions"><a class="btn-primary" href="cuenta.html?next=carnet.html">Entrar</a></div></div>`;
+    return;
+  }
+  let m;
+  try { m = (await api("GET", "/api/me/membership")).membership; } catch (err) { box.innerHTML = `<p class="msg err">${esc(err.message)}</p>`; return; }
+  if (!m || !m.numero) {
+    box.innerHTML = `<div class="card"><h3>${m && m.pendiente ? "Tu pago está en espera" : "Todavía no eres Premium Member"}</h3>
+      <p class="muted">${m && m.pendiente ? "Cuando confirmemos tu pago, tu carnet aparece aquí." : "Hazte miembro y recibe tu carnet digital con código QR."}</p>
+      <div class="actions"><a class="btn-primary" href="premium.html">${m && m.pendiente ? "Ver planes" : "Hazte Premium Member"}</a></div></div>`;
+    return;
+  }
+  box.innerHTML = cardHtml(m) + `
+    <div class="actions noprint">
+      <button class="btn-primary" onclick="window.print()">Imprimir o guardar PDF</button>
+      ${m.estado === "activa" ? "" : '<a class="btn-ghost" href="premium.html">Renovar membresía</a>'}
+    </div>
+    <p class="fine">Quien escanee el código QR verá si tu membresía es válida, tu nombre y tu categoría. Si renuevas, el mismo carnet y el mismo código siguen funcionando. Para tenerlo a mano, guarda esta página en tu pantalla de inicio o en favoritos.</p>`;
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex">
+<title>Validar carnet | Padel Queens</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,500&family=Sora:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="site.css">
+<style>
+.result{text-align:center;padding:40px 26px;}
+.ico{width:92px;height:92px;border-radius:50%;margin:0 auto 22px;display:flex;align-items:center;justify-content:center;font-size:3rem;font-weight:800;border:3px solid;}
+.ico.ok{color:#6fcf97;border-color:#6fcf97;background:rgba(111,207,151,.1);}
+.ico.bad{color:#ff9b7a;border-color:#ff9b7a;background:rgba(255,155,122,.1);}
+.big{font-weight:800;font-size:1.7rem;color:#fff;letter-spacing:-.01em;margin-bottom:6px;}
+dl{display:grid;grid-template-columns:auto 1fr;gap:10px 18px;text-align:left;max-width:360px;margin:26px auto 0;}
+dt{font-size:.72rem;letter-spacing:.14em;color:var(--gold-soft);font-weight:700;align-self:center;}
+dd{font-weight:600;}
+</style>
+</head>
+<body>
+<div id="nav"></div>
+<main><div class="narrow">
+  <div class="card result" id="out"><p class="muted">Validando…</p></div>
+  <p class="muted" style="text-align:center;">Padel Queens. We play. We grow. We rise.</p>
+</div></main>
+<script src="config.js"></script>
+<script src="app.js"></script>
+<script>
+document.getElementById("nav").innerHTML = NAV_HTML;
+renderNav(null);
+const MOTIVO = { vencida: "Esta membresía está vencida.", revocada: "Esta membresía fue cancelada.", invalido: "Este código no es válido. El carnet podría no ser auténtico." };
+(async function () {
+  const out = document.getElementById("out");
+  const c = new URLSearchParams(location.search).get("c");
+  if (!c) { out.innerHTML = '<div class="ico bad">✕</div><div class="big">Falta el código</div><p class="muted">Escanea el QR de un carnet de Padel Queens.</p>'; return; }
+  try {
+    const r = await api("GET", "/api/verify/" + encodeURIComponent(c));
+    const datos = r.nombre ? `<dl><dt>NOMBRE</dt><dd>${esc(r.nombre)}</dd><dt>CATEGORÍA</dt><dd>${esc(r.categoria || "Sin categoría")}</dd><dt>N° DE MIEMBRO</dt><dd>${esc(r.numero)}</dd><dt>${r.valida ? "VIGENTE HASTA" : "VENCIÓ"}</dt><dd>${esc(fechaLarga(r.vigente_hasta))}</dd></dl>` : "";
+    out.innerHTML = r.valida
+      ? `<div class="ico ok">✓</div><div class="big">Membresía válida</div><p class="muted">Premium Member de Padel Queens</p>${datos}`
+      : `<div class="ico bad">✕</div><div class="big">Carnet no válido</div><p class="muted">${esc(MOTIVO[r.motivo] || MOTIVO.invalido)}</p>${r.motivo === "invalido" ? "" : datos}`;
+  } catch (err) { out.innerHTML = `<p class="msg err">${esc(err.message)}</p>`; }
+})();
+</script>
+</body>
+</html>

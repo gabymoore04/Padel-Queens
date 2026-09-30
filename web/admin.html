@@ -38,6 +38,7 @@
       <button class="tab" data-pane="galeria">Galería</button>
       <button class="tab" data-pane="partners">Partners</button>
       <button class="tab" data-pane="textos">Textos</button>
+      <button class="tab" data-pane="membresias">Membresías</button>
       <button class="tab" data-pane="jugadoras">Jugadoras</button>
     </div>
 
@@ -111,6 +112,22 @@
           <p class="msg" id="content-msg"></p>
         </form>
       </div>
+    </section>
+
+    <section class="pane hidden" id="pane-membresias">
+      <div class="card">
+        <h3>Dar una membresía</h3>
+        <p class="muted">Para pagos por otra vía o cortesías. La jugadora debe tener cuenta.</p>
+        <form id="mem-form">
+          <div class="row2">
+            <div><label class="field" for="m-email">Correo de la jugadora</label><input class="in" id="m-email" type="email" required></div>
+            <div><label class="field" for="m-plan">Plan</label><select class="in" id="m-plan"><option value="mensual">Mensual</option><option value="anual">Anual</option></select></div>
+          </div>
+          <div class="actions"><button class="btn-primary" type="submit">Activar membresía</button></div>
+          <p class="msg" id="mem-msg"></p>
+        </form>
+      </div>
+      <div class="card scroll-x"><table class="t"><thead><tr><th>JUGADORA</th><th>PLAN</th><th>ESTADO</th><th>VENCE</th><th></th></tr></thead><tbody id="mems"></tbody></table></div>
     </section>
 
     <section class="pane hidden" id="pane-jugadoras">
@@ -264,7 +281,7 @@ $("events").addEventListener("click", async (e) => {
 
 
 // ---------- Pestañas ----------
-const TAB_LOAD = { resumen: loadStats, galeria: loadPhotos, partners: loadPartners, textos: loadContent, jugadoras: () => loadUsers() };
+const TAB_LOAD = { resumen: loadStats, membresias: loadMems, galeria: loadPhotos, partners: loadPartners, textos: loadContent, jugadoras: () => loadUsers() };
 $("tabs").addEventListener("click", (e) => {
   const t = e.target.closest(".tab"); if (!t) return;
   document.querySelectorAll("#tabs .tab").forEach((x) => x.classList.toggle("active", x === t));
@@ -349,6 +366,34 @@ $("content-form").addEventListener("submit", async (e) => {
   e.preventDefault(); setMsg($("content-msg"), "Guardando…");
   const body = {}; for (const k of CONTENT_KEYS) body[k] = $("c-" + k).value;
   try { await api("PUT", "/api/admin/content", body); setMsg($("content-msg"), "Guardado"); } catch (err) { setMsg($("content-msg"), err.message, true); }
+});
+
+// ---------- Membresías ----------
+async function loadMems() {
+  const list = await api("GET", "/api/admin/memberships");
+  const cls = { activa: "ok", pendiente: "warn", vencida: "bad", revocada: "bad" };
+  $("mems").innerHTML = list.length ? list.map((m) => `<tr>
+    <td><b>${esc(m.nombre)}</b><br><span class="muted">${esc(m.email)}${m.numero ? " · " + esc(m.numero) : ""}</span></td>
+    <td>${esc(m.plan)}<br><span class="muted">US$${m.monto_usd}</span></td>
+    <td><span class="pill ${cls[m.estado]}">${esc(m.estado.toUpperCase())}</span></td>
+    <td>${esc(m.expires_at || "")}</td>
+    <td><div class="actions" style="margin:0;">
+      ${m.estado === "pendiente" ? `<button class="btn-primary btn-sm" data-mem="${m.id}" data-do="activate">Marcar pagado</button>` : ""}
+      ${m.estado === "activa" || m.estado === "pendiente" ? `<button class="btn-ghost btn-sm" data-mem="${m.id}" data-do="revoke">Revocar</button>` : ""}</div></td></tr>`).join("")
+    : '<tr><td colspan="5" class="muted">Todavía no hay membresías.</td></tr>';
+}
+$("mem-form").addEventListener("submit", async (e) => {
+  e.preventDefault(); setMsg($("mem-msg"), "Activando…");
+  try { const r = await api("POST", "/api/admin/memberships", { email: $("m-email").value, plan: $("m-plan").value }); setMsg($("mem-msg"), `Activa: ${r.numero}, hasta ${r.expires_at}`); $("m-email").value = ""; loadMems(); }
+  catch (err) { setMsg($("mem-msg"), err.message, true); }
+});
+$("mems").addEventListener("click", async (e) => {
+  const b = e.target.closest("[data-mem]"); if (!b) return;
+  let body;
+  if (b.dataset.do === "activate") { const ref = prompt("Referencia de CardNet (opcional):"); if (ref === null) return; body = { referencia: ref }; }
+  else if (!confirm("¿Revocar esta membresía? Su carnet dejará de ser válido.")) return;
+  b.disabled = true;
+  try { await api("POST", `/api/admin/memberships/${b.dataset.mem}/${b.dataset.do}`, body); loadMems(); } catch (err) { alert(err.message); b.disabled = false; }
 });
 
 // ---------- Jugadoras ----------
