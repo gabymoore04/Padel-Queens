@@ -18,7 +18,7 @@ bucket_name = "padelqueens-media"
 # Cuando tengas dominio propio o la URL final de la web, cambialo aqui.
 ALLOWED_ORIGINS = "*"
 # URL publica de la web (sin / al final). Se usa en los enlaces de los correos.
-SITE_URL = "https://padelqueens-web.REEMPLAZAR.workers.dev"
+SITE_URL = "https://padelqueens-web.gaby-moore04.workers.dev"
 # Remitente de Resend. Con el dominio de prueba de Resend sirve "onboarding@resend.dev".
 MAIL_FROM = "Padel Queens <onboarding@resend.dev>"
 
