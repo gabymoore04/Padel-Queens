@@ -12,6 +12,10 @@ migrations_dir = "migrations"
 # Origenes permitidos para CORS, separados por coma. "*" permite cualquiera.
 # Cuando tengas dominio propio o la URL final de la web, cambialo aqui.
 ALLOWED_ORIGINS = "*"
+# URL publica de la web (sin / al final). Se usa en los enlaces de los correos.
+SITE_URL = "https://padelqueens-web.REEMPLAZAR.workers.dev"
+# Remitente de Resend. Con el dominio de prueba de Resend sirve "onboarding@resend.dev".
+MAIL_FROM = "Padel Queens <onboarding@resend.dev>"
 
 # Entorno de pruebas: `wrangler deploy --env staging`
 # Antes hay que crear su base: `wrangler d1 create padelqueens-events-staging`

@@ -10,7 +10,7 @@
     "db:migrate:local": "wrangler d1 migrations apply padelqueens-events --local --config api/wrangler.toml",
     "db:migrate:staging": "wrangler d1 migrations apply padelqueens-events-staging --remote --env staging --config api/wrangler.toml",
     "db:migrate:prod": "wrangler d1 migrations apply padelqueens-events --remote --config api/wrangler.toml",
-    "test": "node --test api/test/*.test.js"
+    "test": "rm -rf .wrangler/test-state && wrangler d1 migrations apply padelqueens-events --local --persist-to .wrangler/test-state --config api/wrangler.toml >/dev/null && node --test api/test/*.test.js"
   },
   "devDependencies": {
     "wrangler": "^4.0.0"
