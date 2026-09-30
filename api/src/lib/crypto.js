@@ -11,7 +11,7 @@ export function fromB64url(str) {
   return Uint8Array.from(b, (c) => c.charCodeAt(0));
 }
 
-async function hmac(secret, message) {
+export async function hmac(secret, message) {
   const key = await crypto.subtle.importKey("raw", enc.encode(secret), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
   return b64url(await crypto.subtle.sign("HMAC", key, enc.encode(message)));
 }

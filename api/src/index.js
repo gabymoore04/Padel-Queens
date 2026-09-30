@@ -4,6 +4,7 @@
 // Cuentas:   POST /api/auth/{register,login,verify,resend-verification,forgot,reset}, GET|PUT /api/me
 // Jugadora:  POST /api/events/:id/registrations, GET /api/me/registrations,
 //            POST /api/registrations/:id/{confirm,cancel,pay}
+// Membresia: POST /api/membership, GET /api/me/membership, GET /api/verify/:token
 // Contenido: GET /api/content, /api/photos, /api/partners, /media/*
 // Admin:     /api/admin/* (requiere rol admin): eventos, inscripciones, pagos, fotos, partners, textos, jugadoras
 //
@@ -17,6 +18,7 @@ import { registrationRoutes } from "./routes/registrations.js";
 import { adminRoutes } from "./routes/admin.js";
 import { contentRoutes } from "./routes/content.js";
 import { mediaRoutes } from "./routes/media.js";
+import { membershipRoutes } from "./routes/membership.js";
 
 export default {
   async fetch(request, env) {
@@ -25,7 +27,7 @@ export default {
     if (request.method === "OPTIONS") return new Response(null, { headers: corsHeaders(origin) });
 
     try {
-      for (const route of [eventRoutes, contentRoutes, mediaRoutes, authRoutes, registrationRoutes, adminRoutes]) {
+      for (const route of [eventRoutes, contentRoutes, mediaRoutes, authRoutes, registrationRoutes, membershipRoutes, adminRoutes]) {
         const res = await route(request, env, url, origin);
         if (res) return res;
       }

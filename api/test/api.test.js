@@ -161,3 +161,63 @@ test("admin 2A: textos, fotos R2, partners, jugadoras, resumen y CSV", async () 
   assert.equal(csv.status, 200);
   assert.match(await csv.text(), /Ana/);
 });
+
+test("membresias: pedido, pago, carnet, QR firmado, vencimiento y revocacion", async () => {
+  const admin = (await call("POST", "/api/auth/login", { email: "admin@pq.test", password: "claveSegura1" })).body.token;
+  const gia = await signup("gia@pq.test", "Gia Soto");
+
+  // Sin link de pago configurado no se puede pedir (vacio borra el valor que dejo otra prueba)
+  await call("PUT", "/api/admin/content", { membership_link_annual: "", membership_link_monthly: "" }, admin);
+  assert.equal((await call("POST", "/api/membership", { plan: "anual" }, gia)).status, 409);
+  await call("PUT", "/api/admin/content", { membership_link_annual: "https://pay.test/anual", membership_link_monthly: "https://pay.test/mensual" }, admin);
+  assert.equal((await call("POST", "/api/membership", { plan: "trimestral" }, gia)).status, 400);
+  const req = await call("POST", "/api/membership", { plan: "anual" }, gia);
+  assert.equal(req.body.monto_usd, 100);
+  assert.equal(req.body.pay_url, "https://pay.test/anual");
+  assert.equal((await call("POST", "/api/membership", { plan: "mensual" }, gia)).body.monto_usd, 10); // reemplaza el pendiente
+
+  // Pendiente: todavia no hay carnet
+  let me = (await call("GET", "/api/me/membership", null, gia)).body.membership;
+  assert.equal(me.estado, "pendiente");
+  assert.equal(me.verify_url, undefined);
+
+  // Solo admin activa
+  const list = (await call("GET", "/api/admin/memberships", null, admin)).body;
+  const pend = list.find((m) => m.email === "gia@pq.test");
+  assert.equal((await call("POST", `/api/admin/memberships/${pend.id}/activate`, {}, gia)).status, 403);
+  const act = await call("POST", `/api/admin/memberships/${pend.id}/activate`, { referencia: "CN-9" }, admin);
+  assert.equal(act.status, 200);
+  assert.match(act.body.numero, /^PQ-\d{4}$/);
+
+  me = (await call("GET", "/api/me/membership", null, gia)).body.membership;
+  assert.equal(me.estado, "activa");
+  assert.equal(me.nombre, "Gia Soto");
+  const token = new URL(me.verify_url).searchParams.get("c");
+
+  // El QR valida; uno alterado no
+  let v = (await call("GET", `/api/verify/${token}`)).body;
+  assert.equal(v.valida, true);
+  assert.equal(v.nombre, "Gia Soto");
+  assert.equal((await call("GET", `/api/verify/${token.slice(0, -1)}x`)).body.valida, false);
+  assert.equal((await call("GET", "/api/verify/1.aaaaaaaaaaaaaaaa")).body.valida, false);
+
+  // Renovar conserva el numero y suma el periodo a partir del vencimiento
+  const renew = await call("POST", "/api/admin/memberships", { email: "gia@pq.test", plan: "anual" }, admin);
+  assert.equal(renew.body.numero, act.body.numero);
+  assert.ok(renew.body.expires_at > act.body.expires_at);
+
+  // Vencida: se fuerza la fecha en la base
+  await env.DB.prepare("UPDATE memberships SET expires_at='2020-01-01' WHERE user_id=(SELECT id FROM users WHERE email='gia@pq.test')").run();
+  v = (await call("GET", `/api/verify/${token}`)).body;
+  assert.equal(v.valida, false);
+  assert.equal(v.motivo, "vencida");
+
+  // Revocada
+  await call("POST", "/api/admin/memberships", { email: "gia@pq.test", plan: "mensual" }, admin);
+  assert.equal((await call("GET", `/api/verify/${token}`)).body.valida, true);
+  const id = (await call("GET", "/api/admin/memberships", null, admin)).body.find((m) => m.email === "gia@pq.test").id;
+  await call("POST", `/api/admin/memberships/${id}/revoke`, null, admin);
+  v = (await call("GET", `/api/verify/${token}`)).body;
+  assert.equal(v.valida, false);
+  assert.equal(v.motivo, "revocada");
+});
