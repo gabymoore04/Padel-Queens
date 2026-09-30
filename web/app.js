@@ -49,3 +49,14 @@ function setMsg(el, text, isErr) {
 const NAV_HTML = `<header class="nav"><div class="nav-inner">
   <a class="nav-mark" href="index.html"><span class="crown-badge"><img src="assets/crown-logo-transparent.png" alt=""></span>PADEL QUEENS</a>
   <nav class="nav-links" id="nav-links"></nav></div></header>`;
+
+// Envio de archivos (FormData): el navegador pone solo el Content-Type.
+async function apiForm(method, path, form) {
+  let res;
+  try { res = await fetch(API + path, { method, headers: { Authorization: "Bearer " + Session.token }, body: form }); }
+  catch { throw new Error("No se pudo conectar con el servidor."); }
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || "Algo salió mal");
+  return data;
+}
+const mediaUrl = (key) => API + "/media/" + key;

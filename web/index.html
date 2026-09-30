@@ -287,8 +287,15 @@
   .grid-tab{
     font-size:0.8rem; font-weight:700; padding:9px 18px; border-radius:999px;
     border:1px solid rgba(243,239,228,0.2); color:var(--cream); opacity:0.7;
-    cursor:default;
+    cursor:pointer; background:none; font-family:inherit;
   }
+  .ig-card.photo{padding:0;}
+  .ig-card.photo img{position:absolute; inset:0; width:100%; height:100%; object-fit:cover; z-index:-1;}
+  .ig-card.photo .cap{text-shadow:0 1px 8px rgba(0,0,0,0.6);}
+  .ig-empty{grid-column:1/-1; padding:60px 0; text-align:center; opacity:0.6; font-size:0.94rem;}
+  .event-row.past{opacity:0.55;}
+  .past-head{margin:46px 0 6px; font-size:0.78rem; letter-spacing:0.12em; color:var(--gold-soft); font-weight:700;}
+  .marquee img{height:38px; width:auto; opacity:0.75; filter:grayscale(1) brightness(1.6);}
   .grid-tab.active{background:var(--cream); color:var(--navy-deep); opacity:1; border-color:var(--cream);}
 
   .ig-grid{
@@ -426,7 +433,7 @@
   <div class="hero-crown-wrap"><img class="hero-crown" src="assets/crown-logo-transparent.png" alt="Padel Queens crown"></div>
   <p class="eyebrow">RD · Pádel femenino</p>
   <h1>WE PLAY.<br>WE GROW.<br><em>WE RISE.</em></h1>
-  <p class="sub">Bienvenidas al nuevo universo del pádel femenino en República Dominicana, torneos, comunidad y cancha, todo en una corona.</p>
+  <p class="sub" data-content="hero_sub">Bienvenidas al nuevo universo del pádel femenino en República Dominicana, torneos, comunidad y cancha, todo en una corona.</p>
   <div class="hero-ctas">
     <a class="btn-primary" href="#join">Únete a la comunidad</a>
     <a class="btn-ghost" href="#calendario">Ver calendario</a>
@@ -440,7 +447,7 @@
     <div class="reveal">
       <span class="label">El universo</span>
     </div>
-    <h2 class="reveal">No cualquiera encaja contigo dentro de la cancha. Padel Queens nació para conectar a las jugadoras que quieren jugar en serio, crecer en comunidad y subir de nivel juntas: un torneo, una sesión y una historia a la vez.</h2>
+    <h2 class="reveal" data-content="manifesto">No cualquiera encaja contigo dentro de la cancha. Padel Queens nació para conectar a las jugadoras que quieren jugar en serio, crecer en comunidad y subir de nivel juntas: un torneo, una sesión y una historia a la vez.</h2>
   </div>
 </section>
 
@@ -508,13 +515,13 @@
     </div>
 
     <div class="grid-tabs reveal">
-      <span class="grid-tab active">Events</span>
-      <span class="grid-tab">Torneos</span>
-      <span class="grid-tab">Behinds</span>
-      <span class="grid-tab">Partners</span>
+      <button class="grid-tab active" data-album="Events">Events</button>
+      <button class="grid-tab" data-album="Torneos">Torneos</button>
+      <button class="grid-tab" data-album="Behinds">Behinds</button>
+      <button class="grid-tab" data-album="Partners">Partners</button>
     </div>
 
-    <div class="ig-grid reveal">
+    <div class="ig-grid reveal" id="ig-grid">
       <div class="ig-card c1"><div class="cap">No cualquiera encaja contigo dentro de la cancha</div><div class="stat">👁 1,385</div></div>
       <div class="ig-card c2"><div class="cap">The Crown Cup, VISA</div><div class="stat">👁 3,403</div></div>
       <div class="ig-card c3"><div class="cap">Court Sessions · 5ta División</div><div class="stat">👁 3,831</div></div>
@@ -529,7 +536,7 @@
   <div class="wrap">
     <p class="label-row">Con el apoyo de</p>
   </div>
-  <div class="marquee">
+  <div class="marquee" id="marquee">
     <span>VISA</span><span>BHD</span><span>Incanto</span><span>Starbucks</span><span>Swarovski</span><span>Mapfre</span><span>Fiji Water</span><span>Arajet</span>
     <span>VISA</span><span>BHD</span><span>Incanto</span><span>Starbucks</span><span>Swarovski</span><span>Mapfre</span><span>Fiji Water</span><span>Arajet</span>
   </div>
@@ -537,9 +544,9 @@
 
 <section class="join" id="join">
   <div class="wrap">
-    <h2 class="reveal">Tu pareja de pádel puede cambiar todo el juego.</h2>
-    <p class="reveal">Únete al grupo de WhatsApp de Padel Queens y entérate primero de cada torneo, court session y sorpresa.</p>
-    <a class="btn-primary reveal" href="#" style="display:inline-block;">Unirme por WhatsApp</a>
+    <h2 class="reveal" data-content="join_title">Tu pareja de pádel puede cambiar todo el juego.</h2>
+    <p class="reveal" data-content="join_text">Únete al grupo de WhatsApp de Padel Queens y entérate primero de cada torneo, court session y sorpresa.</p>
+    <a class="btn-primary reveal" href="#" data-href="whatsapp_url" target="_blank" rel="noopener" style="display:inline-block;">Unirme por WhatsApp</a>
   </div>
 </section>
 
@@ -550,7 +557,7 @@
       PADEL QUEENS
     </div>
     <div class="foot-links">
-      <a href="#">@padelqueenshq</a>
+      <a href="#" data-href="instagram_url" target="_blank" rel="noopener">@padelqueenshq</a>
       <a href="#calendario">Calendario</a>
       <a href="#galeria">Galería</a>
     </div>
@@ -594,10 +601,9 @@
     return '';
   }
 
-  function renderPublicEvents(events){
-    if(!events || !events.length) return; // deja el respaldo estático si la API no responde
-    listEl.innerHTML = events.map(e => `
-      <div class="event-row reveal in">
+  function eventRow(e, past){
+    return `
+      <div class="event-row reveal in${past ? ' past' : ''}">
         <div class="event-date">${esc(e.date_label)}<span>${esc(e.date_sub)}</span></div>
         <div class="event-body">
           <h3>${esc(e.title)}</h3>
@@ -605,10 +611,19 @@
         </div>
         <div class="event-side">
           ${e.tag ? `<div class="event-tag ${e.tag_live ? 'live' : ''}">${esc(e.tag)}</div>` : ''}
-          ${eventAction(e)}
+          ${past ? '' : eventAction(e)}
         </div>
-      </div>
-    `).join('');
+      </div>`;
+  }
+
+  function renderPublicEvents(events){
+    if(!events || !events.length) return; // deja el respaldo estático si la API no responde
+    const today = new Date().toISOString().slice(0,10);
+    const isPast = (e) => e.estado === 'finalizado' || (e.event_date && e.event_date < today);
+    const next = events.filter(e => !isPast(e));
+    const past = events.filter(isPast);
+    listEl.innerHTML = next.map(e => eventRow(e, false)).join('')
+      + (past.length ? `<p class="past-head">ANTERIORES</p>` + past.map(e => eventRow(e, true)).join('') : '');
   }
 
   async function loadEvents(){
@@ -621,6 +636,61 @@
     }
   }
   loadEvents();
+
+  // ================== CONTENIDO, GALERÍA Y PARTNERS ==================
+  const safeUrl = (u) => /^https?:\/\//i.test(u || '');
+
+  async function loadContent(){
+    try{
+      const res = await fetch(`${API_BASE}/api/content`);
+      if(!res.ok) return;
+      const c = await res.json();
+      document.querySelectorAll('[data-content]').forEach(el => { const v = c[el.dataset.content]; if(v) el.textContent = v; });
+      document.querySelectorAll('[data-href]').forEach(el => { const v = c[el.dataset.href]; if(safeUrl(v)) el.href = v; });
+    }catch(err){}
+  }
+  loadContent();
+
+  let photos = null;
+  const grid = document.getElementById('ig-grid');
+  const staticGrid = grid.innerHTML;
+  function showAlbum(album){
+    if(!photos || !photos.length) return; // sin fotos subidas: queda la rejilla de ejemplo
+    const list = photos.filter(p => p.album === album);
+    grid.innerHTML = list.length
+      ? list.map(p => `<div class="ig-card photo"><img loading="lazy" src="${esc(API_BASE + '/media/' + p.key)}" alt="${esc(p.caption || '')}">${p.caption ? `<div class="cap">${esc(p.caption)}</div>` : ''}</div>`).join('')
+      : '<p class="ig-empty">Pronto habrá fotos en este álbum.</p>';
+  }
+  document.querySelectorAll('.grid-tab').forEach(t => t.addEventListener('click', () => {
+    document.querySelectorAll('.grid-tab').forEach(x => x.classList.toggle('active', x === t));
+    if(photos && photos.length) showAlbum(t.dataset.album); else grid.innerHTML = staticGrid;
+  }));
+  (async function(){
+    try{
+      const res = await fetch(`${API_BASE}/api/photos`);
+      if(!res.ok) return;
+      photos = await res.json();
+      if(!photos.length) return;
+      // abre en el primer álbum que tenga fotos
+      const first = ['Events','Torneos','Behinds','Partners'].find(al => photos.some(p => p.album === al));
+      document.querySelectorAll('.grid-tab').forEach(x => x.classList.toggle('active', x.dataset.album === first));
+      showAlbum(first);
+    }catch(err){}
+  })();
+
+  (async function(){
+    try{
+      const res = await fetch(`${API_BASE}/api/partners`);
+      if(!res.ok) return;
+      const list = await res.json();
+      if(!list.length) return;
+      const one = list.map(p => {
+        const inner = p.logo_key ? `<img src="${esc(API_BASE + '/media/' + p.logo_key)}" alt="${esc(p.nombre)}">` : esc(p.nombre);
+        return safeUrl(p.link) ? `<a href="${esc(p.link)}" target="_blank" rel="noopener"><span>${inner}</span></a>` : `<span>${inner}</span>`;
+      }).join('');
+      document.getElementById('marquee').innerHTML = one + one;
+    }catch(err){}
+  })();
 
 </script>
 

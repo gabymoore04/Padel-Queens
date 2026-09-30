@@ -8,6 +8,17 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,500&family=Sora:wght@400;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="site.css">
+<style>
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px;margin-bottom:18px;}
+.stat{background:var(--navy);border:1px solid var(--line);border-radius:14px;padding:20px;}
+.stat b{display:block;font-size:2rem;color:var(--gold-soft);font-weight:800;}
+.stat span{font-size:0.78rem;opacity:0.7;letter-spacing:0.05em;}
+.thumbs{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px;}
+.thumb{background:var(--navy);border:1px solid var(--line);border-radius:12px;overflow:hidden;}
+.thumb img{width:100%;aspect-ratio:9/13;object-fit:cover;display:block;background:var(--navy-deep);}
+.thumb div{padding:10px;font-size:0.76rem;}
+.logo-sm{height:34px;max-width:90px;object-fit:contain;}
+</style>
 </head>
 <body>
 <div id="nav"></div>
@@ -20,15 +31,105 @@
 
   <div id="panel" class="hidden">
     <span class="eyebrow">Administración</span>
-    <h1 class="title">Eventos e inscripciones</h1>
+    <h1 class="title">Panel de control</h1>
+    <div class="tabs" id="tabs" style="flex-wrap:wrap;">
+      <button class="tab active" data-pane="resumen">Resumen</button>
+      <button class="tab" data-pane="eventos">Eventos</button>
+      <button class="tab" data-pane="galeria">Galería</button>
+      <button class="tab" data-pane="partners">Partners</button>
+      <button class="tab" data-pane="textos">Textos</button>
+      <button class="tab" data-pane="jugadoras">Jugadoras</button>
+    </div>
 
+    <section class="pane" id="pane-resumen">
+      <div class="stats" id="stats"></div>
+      <p class="muted">Los pagos pendientes son los que las jugadoras iniciaron y todavía no marcaste como pagados. Revísalos en Eventos, Inscripciones.</p>
+    </section>
+
+    <section class="pane hidden" id="pane-galeria">
+      <div class="card">
+        <h3>Subir foto</h3>
+        <form id="photo-form">
+          <div class="row2">
+            <div><label class="field" for="p-album">Álbum</label><select class="in" id="p-album"><option>Events</option><option>Torneos</option><option>Behinds</option><option>Partners</option></select></div>
+            <div><label class="field" for="p-caption">Texto de la foto (opcional)</label><input class="in" id="p-caption" maxlength="200"></div>
+          </div>
+          <label class="field" for="p-file">Imagen (JPG, PNG o WebP, máximo 5 MB)</label>
+          <input class="in" id="p-file" type="file" accept="image/jpeg,image/png,image/webp" multiple required>
+          <div class="actions"><button class="btn-primary" type="submit">Subir</button></div>
+          <p class="msg" id="photo-msg"></p>
+        </form>
+      </div>
+      <div class="thumbs" id="photos"></div>
+    </section>
+
+    <section class="pane hidden" id="pane-partners">
+      <div class="card">
+        <h3 id="partner-title">Nuevo partner</h3>
+        <form id="partner-form">
+          <input type="hidden" id="pt-id">
+          <div class="row2">
+            <div><label class="field" for="pt-nombre">Nombre</label><input class="in" id="pt-nombre" required></div>
+            <div><label class="field" for="pt-link">Link (opcional)</label><input class="in" id="pt-link" placeholder="https://..."></div>
+          </div>
+          <div class="row2">
+            <div><label class="field" for="pt-file">Logo (opcional)</label><input class="in" id="pt-file" type="file" accept="image/jpeg,image/png,image/webp"></div>
+            <div><label class="field" for="pt-order">Orden</label><input class="in" id="pt-order" type="number" value="0"></div>
+          </div>
+          <div class="actions"><button class="btn-primary" type="submit">Guardar partner</button>
+            <button class="btn-ghost hidden" type="button" id="pt-cancel">Cancelar edición</button></div>
+          <p class="msg" id="partner-msg"></p>
+        </form>
+      </div>
+      <div class="card scroll-x"><table class="t"><thead><tr><th>LOGO</th><th>PARTNER</th><th>ORDEN</th><th></th></tr></thead><tbody id="partners"></tbody></table></div>
+    </section>
+
+    <section class="pane hidden" id="pane-textos">
+      <div class="card">
+        <h3>Textos de la web</h3>
+        <p class="muted">Si dejas un campo vacío, la web usa el texto original.</p>
+        <form id="content-form">
+          <label class="field" for="c-hero_sub">Frase bajo el título principal</label><textarea class="in" id="c-hero_sub" rows="2"></textarea>
+          <label class="field" for="c-manifesto">Manifiesto (sección El universo)</label><textarea class="in" id="c-manifesto" rows="4"></textarea>
+          <label class="field" for="c-join_title">Título del llamado final</label><input class="in" id="c-join_title">
+          <label class="field" for="c-join_text">Texto del llamado final</label><textarea class="in" id="c-join_text" rows="2"></textarea>
+          <div class="row2">
+            <div><label class="field" for="c-whatsapp_url">Link del grupo de WhatsApp</label><input class="in" id="c-whatsapp_url" placeholder="https://chat.whatsapp.com/..."></div>
+            <div><label class="field" for="c-instagram_url">Link de Instagram</label><input class="in" id="c-instagram_url" placeholder="https://instagram.com/padelqueenshq"></div>
+          </div>
+          <h3 style="margin-top:26px;">Premium Member</h3>
+          <label class="field" for="c-benefits">Beneficios (uno por línea)</label><textarea class="in" id="c-benefits" rows="6" placeholder="Uno por línea. Mientras esté vacío, la página dice que los beneficios se anunciarán pronto."></textarea>
+          <div class="row2">
+            <div><label class="field" for="c-membership_price_monthly">Precio mensual (USD)</label><input class="in" id="c-membership_price_monthly" placeholder="10"></div>
+            <div><label class="field" for="c-membership_price_annual">Precio anual (USD)</label><input class="in" id="c-membership_price_annual" placeholder="100"></div>
+          </div>
+          <div class="row2">
+            <div><label class="field" for="c-membership_link_monthly">Link de pago CardNet mensual</label><input class="in" id="c-membership_link_monthly" placeholder="https://..."></div>
+            <div><label class="field" for="c-membership_link_annual">Link de pago CardNet anual</label><input class="in" id="c-membership_link_annual" placeholder="https://..."></div>
+          </div>
+          <div class="actions"><button class="btn-primary" type="submit">Guardar textos</button></div>
+          <p class="msg" id="content-msg"></p>
+        </form>
+      </div>
+    </section>
+
+    <section class="pane hidden" id="pane-jugadoras">
+      <div class="card">
+        <label class="field" for="u-q" style="margin-top:0;">Buscar por nombre o correo</label>
+        <input class="in" id="u-q" placeholder="Escribe para buscar">
+        <div class="scroll-x" style="margin-top:14px;"><table class="t"><thead><tr><th>JUGADORA</th><th>CAT.</th><th>CORREO</th><th>ROL</th></tr></thead><tbody id="users"></tbody></table></div>
+        <p class="msg" id="users-msg"></p>
+      </div>
+    </section>
+
+    <section class="pane hidden" id="pane-eventos">
     <div class="card scroll-x">
       <table class="t"><thead><tr><th>EVENTO</th><th>ESTADO</th><th>PRECIO</th><th>PAREJAS</th><th></th></tr></thead>
       <tbody id="events"></tbody></table>
     </div>
 
     <div class="card hidden" id="regs-card">
-      <h3 id="regs-title">Inscripciones</h3>
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;"><h3 id="regs-title">Inscripciones</h3><button class="btn-ghost btn-sm" id="csv">Exportar a Excel (CSV)</button></div>
       <div class="scroll-x" id="regs"></div>
     </div>
 
@@ -67,6 +168,7 @@
         <p class="msg" id="msg"></p>
       </form>
     </div>
+    </section>
   </div>
 </div></main>
 
@@ -160,12 +262,128 @@ $("events").addEventListener("click", async (e) => {
   }
 });
 
+
+// ---------- Pestañas ----------
+const TAB_LOAD = { resumen: loadStats, galeria: loadPhotos, partners: loadPartners, textos: loadContent, jugadoras: () => loadUsers() };
+$("tabs").addEventListener("click", (e) => {
+  const t = e.target.closest(".tab"); if (!t) return;
+  document.querySelectorAll("#tabs .tab").forEach((x) => x.classList.toggle("active", x === t));
+  document.querySelectorAll(".pane").forEach((p) => p.classList.toggle("hidden", p.id !== "pane-" + t.dataset.pane));
+  if (TAB_LOAD[t.dataset.pane]) TAB_LOAD[t.dataset.pane]();
+});
+
+async function loadStats() {
+  const d = await api("GET", "/api/admin/summary");
+  const items = [["Jugadoras registradas", d.jugadoras], ["Eventos abiertos", d.eventosAbiertos], ["Parejas confirmadas", d.parejas], ["Pagos por confirmar", d.pagosPendientes], ["Cobrado", rd(d.cobrado)]];
+  $("stats").innerHTML = items.map(([l, v]) => `<div class="stat"><b>${esc(v)}</b><span>${esc(l.toUpperCase())}</span></div>`).join("");
+}
+
+// ---------- Galería ----------
+async function loadPhotos() {
+  const list = await api("GET", "/api/photos");
+  $("photos").innerHTML = list.length ? list.map((p) => `<div class="thumb"><img src="${esc(mediaUrl(p.key))}" alt="">
+    <div><b>${esc(p.album)}</b> · orden ${p.sort_order}<br><span class="muted">${esc(p.caption || "")}</span>
+    <div class="actions" style="margin-top:8px;"><button class="btn-ghost btn-sm" data-ph-edit="${p.id}">Editar</button><button class="btn-ghost btn-sm" data-ph-del="${p.id}">Borrar</button></div></div></div>`).join("")
+    : '<p class="muted">Todavía no hay fotos.</p>';
+  $("photos")._list = list;
+}
+$("photo-form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const files = [...$("p-file").files]; let ok = 0;
+  for (const f of files) {
+    setMsg($("photo-msg"), `Subiendo ${ok + 1} de ${files.length}…`);
+    const fd = new FormData(); fd.set("album", $("p-album").value); fd.set("caption", $("p-caption").value); fd.set("file", f);
+    try { await apiForm("POST", "/api/admin/photos", fd); ok++; } catch (err) { setMsg($("photo-msg"), `${f.name}: ${err.message}`, true); return; }
+  }
+  setMsg($("photo-msg"), `${ok} foto(s) subida(s)`); $("photo-form").reset(); loadPhotos();
+});
+$("photos").addEventListener("click", async (e) => {
+  const d = e.target.closest("[data-ph-del]"), ed = e.target.closest("[data-ph-edit]");
+  try {
+    if (d && confirm("¿Borrar esta foto?")) { await api("DELETE", `/api/admin/photos/${d.dataset.phDel}`); loadPhotos(); }
+    if (ed) {
+      const p = $("photos")._list.find((x) => String(x.id) === ed.dataset.phEdit);
+      const album = prompt("Álbum (Events, Torneos, Behinds, Partners):", p.album); if (album === null) return;
+      const caption = prompt("Texto de la foto:", p.caption || ""); if (caption === null) return;
+      const order = prompt("Orden (número menor sale primero):", p.sort_order); if (order === null) return;
+      await api("PUT", `/api/admin/photos/${p.id}`, { album, caption, sort_order: parseInt(order, 10) || 0 }); loadPhotos();
+    }
+  } catch (err) { alert(err.message); }
+});
+
+// ---------- Partners ----------
+async function loadPartners() {
+  const list = await api("GET", "/api/partners");
+  $("partners")._list = list;
+  $("partners").innerHTML = list.map((p) => `<tr><td>${p.logo_key ? `<img class="logo-sm" src="${esc(mediaUrl(p.logo_key))}" alt="">` : '<span class="muted">sin logo</span>'}</td>
+    <td><b>${esc(p.nombre)}</b><br><span class="muted">${esc(p.link || "")}</span></td><td>${p.sort_order}</td>
+    <td><div class="actions" style="margin:0;"><button class="btn-ghost btn-sm" data-pt-edit="${p.id}">Editar</button><button class="btn-ghost btn-sm" data-pt-del="${p.id}">Borrar</button></div></td></tr>`).join("");
+}
+function fillPartner(p) {
+  $("partner-title").textContent = p ? "Editar partner" : "Nuevo partner";
+  $("pt-id").value = p ? p.id : ""; $("pt-nombre").value = p?.nombre ?? ""; $("pt-link").value = p?.link ?? "";
+  $("pt-order").value = p?.sort_order ?? 0; $("pt-file").value = ""; $("pt-cancel").classList.toggle("hidden", !p);
+}
+$("pt-cancel").addEventListener("click", () => fillPartner(null));
+$("partner-form").addEventListener("submit", async (e) => {
+  e.preventDefault(); setMsg($("partner-msg"), "Guardando…");
+  const fd = new FormData(); fd.set("nombre", $("pt-nombre").value); fd.set("link", $("pt-link").value); fd.set("sort_order", $("pt-order").value);
+  if ($("pt-file").files[0]) fd.set("file", $("pt-file").files[0]);
+  const id = $("pt-id").value;
+  try { await apiForm(id ? "PUT" : "POST", id ? `/api/admin/partners/${id}` : "/api/admin/partners", fd); setMsg($("partner-msg"), "Guardado"); fillPartner(null); loadPartners(); }
+  catch (err) { setMsg($("partner-msg"), err.message, true); }
+});
+$("partners").addEventListener("click", async (e) => {
+  const ed = e.target.closest("[data-pt-edit]"), d = e.target.closest("[data-pt-del]");
+  if (ed) fillPartner($("partners")._list.find((x) => String(x.id) === ed.dataset.ptEdit));
+  if (d && confirm("¿Borrar este partner?")) { try { await api("DELETE", `/api/admin/partners/${d.dataset.ptDel}`); loadPartners(); } catch (err) { alert(err.message); } }
+});
+
+// ---------- Textos ----------
+const CONTENT_KEYS = ["hero_sub", "manifesto", "join_title", "join_text", "whatsapp_url", "instagram_url", "benefits", "membership_price_monthly", "membership_price_annual", "membership_link_monthly", "membership_link_annual"];
+async function loadContent() {
+  const c = await api("GET", "/api/admin/content");
+  for (const k of CONTENT_KEYS) $("c-" + k).value = c[k] || "";
+}
+$("content-form").addEventListener("submit", async (e) => {
+  e.preventDefault(); setMsg($("content-msg"), "Guardando…");
+  const body = {}; for (const k of CONTENT_KEYS) body[k] = $("c-" + k).value;
+  try { await api("PUT", "/api/admin/content", body); setMsg($("content-msg"), "Guardado"); } catch (err) { setMsg($("content-msg"), err.message, true); }
+});
+
+// ---------- Jugadoras ----------
+let userTimer;
+async function loadUsers() {
+  try {
+    const list = await api("GET", "/api/admin/users?q=" + encodeURIComponent($("u-q").value));
+    $("users").innerHTML = list.map((u) => `<tr><td><b>${esc(u.nombre || "")}</b><br><span class="muted">${esc(u.telefono || "")}${u.email_verified ? "" : " · correo sin verificar"}</span></td>
+      <td>${esc(u.categoria || "")}</td><td>${esc(u.email)}</td>
+      <td>${u.role === "admin" ? '<span class="pill warn">ADMIN</span>' : ""}<button class="btn-ghost btn-sm" data-role="${u.id}" data-to="${u.role === "admin" ? "player" : "admin"}">${u.role === "admin" ? "Quitar admin" : "Hacer admin"}</button></td></tr>`).join("");
+  } catch (err) { setMsg($("users-msg"), err.message, true); }
+}
+$("u-q").addEventListener("input", () => { clearTimeout(userTimer); userTimer = setTimeout(loadUsers, 300); });
+$("users").addEventListener("click", async (e) => {
+  const b = e.target.closest("[data-role]"); if (!b) return;
+  if (!confirm(b.dataset.to === "admin" ? "¿Dar acceso de administradora a esta cuenta?" : "¿Quitar el acceso de administradora?")) return;
+  try { await api("POST", `/api/admin/users/${b.dataset.role}/role`, { role: b.dataset.to }); setMsg($("users-msg"), ""); loadUsers(); } catch (err) { setMsg($("users-msg"), err.message, true); }
+});
+
+// ---------- CSV ----------
+$("csv").addEventListener("click", async () => {
+  const id = $("regs").dataset.event; if (!id) return;
+  try {
+    const res = await fetch(`${API}/api/admin/events/${id}/registrations.csv`, { headers: { Authorization: "Bearer " + Session.token } });
+    if (!res.ok) throw new Error("No se pudo exportar");
+    const a = document.createElement("a"); a.href = URL.createObjectURL(await res.blob()); a.download = `inscripciones-${id}.csv`; a.click(); URL.revokeObjectURL(a.href);
+  } catch (err) { alert(err.message); }
+});
+
 (async function () {
   const me = await loadMe();
   renderNav(me);
   if (!me || me.role !== "admin") { $("denied").classList.remove("hidden"); return; }
   $("panel").classList.remove("hidden");
-  loadEvents();
+  loadEvents(); loadStats();
 })();
 </script>
 </body>
