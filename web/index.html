@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Padel Queens — We play. We grow. We rise.</title>
+<title>Padel Queens: We play. We grow. We rise.</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,500&family=Sora:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -466,7 +466,7 @@
   <div class="hero-crown-wrap"><img class="hero-crown" src="assets/crown-logo-transparent.png" alt="Padel Queens crown"></div>
   <p class="eyebrow">RD · Pádel femenino</p>
   <h1>WE PLAY.<br>WE GROW.<br><em>WE RISE.</em></h1>
-  <p class="sub">Bienvenidas al nuevo universo del pádel femenino en República Dominicana — torneos, comunidad y cancha, todo en una corona.</p>
+  <p class="sub">Bienvenidas al nuevo universo del pádel femenino en República Dominicana, torneos, comunidad y cancha, todo en una corona.</p>
   <div class="hero-ctas">
     <a class="btn-primary" href="#join">Únete a la comunidad</a>
     <a class="btn-ghost" href="#calendario">Ver calendario</a>
@@ -480,7 +480,7 @@
     <div class="reveal">
       <span class="label">El universo</span>
     </div>
-    <h2 class="reveal">No cualquiera encaja contigo dentro de la cancha. Padel Queens nació para conectar a las jugadoras que quieren jugar en serio, crecer en comunidad y subir de nivel juntas — un torneo, una sesión y una historia a la vez.</h2>
+    <h2 class="reveal">No cualquiera encaja contigo dentro de la cancha. Padel Queens nació para conectar a las jugadoras que quieren jugar en serio, crecer en comunidad y subir de nivel juntas: un torneo, una sesión y una historia a la vez.</h2>
   </div>
 </section>
 
@@ -491,7 +491,7 @@
         <span class="label">Calendario</span>
         <h2>Próximos eventos</h2>
       </div>
-      <p>Torneos, court sessions y la copa insignia del año — todo en un mismo lugar, sin tener que hacer scroll por el feed.</p>
+      <p>Torneos, court sessions y la copa insignia del año, todo en un mismo lugar, sin tener que hacer scroll por el feed.</p>
     </div>
 
     <div class="event-list" id="event-list">
@@ -513,7 +513,7 @@
       <div class="event-row reveal">
         <div class="event-date">5TA<span>DIVISIÓN</span></div>
         <div class="event-body">
-          <h3>Court Sessions — Temporada 01</h3>
+          <h3>Court Sessions, Temporada 01</h3>
           <p>Fin de temporada: 7 episodios de conversaciones sin filtros, sin poses y sin pedir permiso, contadas desde la cancha.</p>
         </div>
         <div class="event-side">
@@ -544,7 +544,7 @@
         <span class="label">Galería</span>
         <h2>Desde la cancha</h2>
       </div>
-      <p>Un vistazo a los momentos que hacen la comunidad — organizados igual que en @padelqueenshq.</p>
+      <p>Un vistazo a los momentos que hacen la comunidad. organizados igual que en @padelqueenshq.</p>
     </div>
 
     <div class="grid-tabs reveal">
@@ -595,7 +595,7 @@
       <a href="#galeria">Galería</a>
     </div>
   </div>
-  <p class="copy">Padel Queens — We play. We grow. We rise.</p>
+  <p class="copy">Padel Queens: We play. We grow. We rise.</p>
 </footer>
 
 <button class="admin-fab" id="admin-fab" title="Admin">⚙</button>
@@ -644,6 +644,7 @@
   </div>
 </div>
 
+<script src="config.js"></script>
 <script>
   const revealEls = document.querySelectorAll('.reveal');
   const io = new IntersectionObserver((entries)=>{
@@ -666,7 +667,7 @@
   });
 
   // ================== EVENTOS (API) ==================
-  const API_BASE = "https://api.padelqueensclub.com";
+  const API_BASE = (window.PQ_API_BASE || "").replace(/\/$/, "");
 
   const listEl = document.getElementById('event-list');
   const money = (s) => s || '';
@@ -753,7 +754,7 @@
     const wrap = document.getElementById('admin-event-list');
     wrap.innerHTML = events.map(e => `
       <div class="admin-event-item">
-        <span>${e.date_label} — ${e.title}</span>
+        <span>${e.date_label} · ${e.title}</span>
         <div class="actions">
           <button data-edit="${e.id}">Editar</button>
           <button data-del="${e.id}">Borrar</button>

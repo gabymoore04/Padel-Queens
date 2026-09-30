@@ -1,4 +1,4 @@
-// Padel Queens — Events API + Admin login
+// Padel Queens: Events API + Admin login
 //
 // Rutas:
 //   GET    /api/events            -> pública, lista de eventos (para la web)
@@ -14,11 +14,18 @@
 
 const TOKEN_TTL_SECONDS = 60 * 60 * 6; // la sesión de admin dura 6 horas
 
+function allowedOrigin(origin, env) {
+  const list = (env.ALLOWED_ORIGINS || "*").split(",").map((o) => o.trim());
+  if (list.includes("*")) return "*";
+  return list.includes(origin) ? origin : list[0];
+}
+
 function corsHeaders(origin) {
   return {
     "Access-Control-Allow-Origin": origin || "*",
     "Access-Control-Allow-Methods": "GET,POST,PUT,DELETE,OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type, Authorization",
+    "Vary": "Origin",
   };
 }
 
@@ -71,7 +78,7 @@ function getBearer(request) {
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
-    const origin = request.headers.get("Origin");
+    const origin = allowedOrigin(request.headers.get("Origin"), env);
 
     if (request.method === "OPTIONS") {
       return new Response(null, { headers: corsHeaders(origin) });

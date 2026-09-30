@@ -1,0 +1,18 @@
+{
+  "name": "padel-queens",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev:api": "wrangler dev --config api/wrangler.toml",
+    "dev:web": "wrangler dev --config web/wrangler.toml",
+    "deploy:api": "wrangler deploy --config api/wrangler.toml",
+    "deploy:web": "wrangler deploy --config web/wrangler.toml",
+    "db:migrate:local": "wrangler d1 migrations apply padelqueens-events --local --config api/wrangler.toml",
+    "db:migrate:staging": "wrangler d1 migrations apply padelqueens-events-staging --remote --env staging --config api/wrangler.toml",
+    "db:migrate:prod": "wrangler d1 migrations apply padelqueens-events --remote --config api/wrangler.toml",
+    "test": "node --test api/test/*.test.js"
+  },
+  "devDependencies": {
+    "wrangler": "^4.0.0"
+  }
+}

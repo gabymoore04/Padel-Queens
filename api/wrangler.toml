@@ -1,0 +1,29 @@
+name = "padelqueens-events-api"
+main = "src/index.js"
+compatibility_date = "2025-01-01"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "padelqueens-events"
+database_id = "52d74fb0-84f4-43ff-b998-dc7f7a67f1c5"
+migrations_dir = "migrations"
+
+[vars]
+# Origenes permitidos para CORS, separados por coma. "*" permite cualquiera.
+# Cuando tengas dominio propio o la URL final de la web, cambialo aqui.
+ALLOWED_ORIGINS = "*"
+
+# Entorno de pruebas: `wrangler deploy --env staging`
+# Antes hay que crear su base: `wrangler d1 create padelqueens-events-staging`
+# y pegar aqui el database_id que devuelve.
+[env.staging]
+name = "padelqueens-events-api-staging"
+
+[env.staging.vars]
+ALLOWED_ORIGINS = "*"
+
+[[env.staging.d1_databases]]
+binding = "DB"
+database_name = "padelqueens-events-staging"
+database_id = "REEMPLAZAR_CON_ID_DE_STAGING"
+migrations_dir = "migrations"
