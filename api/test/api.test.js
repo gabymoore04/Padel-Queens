@@ -115,3 +115,49 @@ test("no verificada no puede inscribirse", async () => {
   const res = await call("POST", `/api/events/${evs[0].id}/registrations`, { partner_email: "eva@pq.test", categoria: "4ta" }, r.body.token);
   assert.equal(res.status, 403);
 });
+
+test("admin 2A: textos, fotos R2, partners, jugadoras, resumen y CSV", async () => {
+  const admin = (await call("POST", "/api/auth/login", { email: "admin@pq.test", password: "claveSegura1" })).body.token;
+  const jug = (await call("POST", "/api/auth/login", { email: "ana@pq.test", password: "claveSegura1" })).body.token;
+
+  // Textos editables: los links de pago de membresia no salen en la API publica
+  assert.equal((await call("PUT", "/api/admin/content", { hero_sub: "Hola", membership_link_annual: "https://pay.test/a" }, jug)).status, 403);
+  assert.equal((await call("PUT", "/api/admin/content", { whatsapp_url: "javascript:x" }, admin)).status, 400);
+  assert.equal((await call("PUT", "/api/admin/content", { hero_sub: "Hola", membership_link_annual: "https://pay.test/a" }, admin)).status, 200);
+  const pub = (await call("GET", "/api/content")).body;
+  assert.equal(pub.hero_sub, "Hola");
+  assert.equal(pub.membership_link_annual, undefined);
+
+  // Foto a R2 y lectura publica
+  const png = new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10]);
+  const form = new FormData();
+  form.set("album", "Torneos"); form.set("caption", "Final"); form.set("file", new File([png], "a.png", { type: "image/png" }));
+  const up = await worker.fetch(new Request(BASE + "/api/admin/photos", { method: "POST", headers: { Authorization: `Bearer ${admin}` }, body: form }), env);
+  assert.equal(up.status, 201);
+  const { key, id } = await up.json();
+  const img = await worker.fetch(new Request(BASE + "/media/" + key), env);
+  assert.equal(img.status, 200);
+  assert.equal(img.headers.get("Content-Type"), "image/png");
+  assert.equal((await call("GET", "/api/photos?album=Torneos")).body.length, 1);
+  const bad = new FormData(); bad.set("album", "Torneos"); bad.set("file", new File(["x"], "a.txt", { type: "text/plain" }));
+  assert.equal((await worker.fetch(new Request(BASE + "/api/admin/photos", { method: "POST", headers: { Authorization: `Bearer ${admin}` }, body: bad }), env)).status, 400);
+  assert.equal((await call("DELETE", `/api/admin/photos/${id}`, null, admin)).status, 200);
+  assert.equal((await worker.fetch(new Request(BASE + "/media/" + key), env)).status, 404);
+
+  // Partner sin logo
+  const pf = new FormData(); pf.set("nombre", "VISA"); pf.set("link", "https://visa.test");
+  assert.equal((await worker.fetch(new Request(BASE + "/api/admin/partners", { method: "POST", headers: { Authorization: `Bearer ${admin}` }, body: pf }), env)).status, 201);
+  assert.equal((await call("GET", "/api/partners")).body[0].nombre, "VISA");
+
+  // Jugadoras, rol, resumen y CSV
+  const users = (await call("GET", "/api/admin/users?q=ana@pq.test", null, admin)).body.filter((u) => u.email === "ana@pq.test");
+  assert.equal(users.length, 1);
+  assert.equal((await call("POST", `/api/admin/users/${users[0].id}/role`, { role: "admin" }, admin)).status, 200);
+  assert.equal((await call("GET", "/api/admin/summary", null, jug)).status, 200); // ahora Ana es admin
+  const sum = (await call("GET", "/api/admin/summary", null, admin)).body;
+  assert.ok(sum.jugadoras >= 4 && sum.cobrado === 5000);
+  const evs = (await call("GET", "/api/admin/events", null, admin)).body;
+  const csv = await worker.fetch(new Request(`${BASE}/api/admin/events/${evs[0].id}/registrations.csv`, { headers: { Authorization: `Bearer ${admin}` } }), env);
+  assert.equal(csv.status, 200);
+  assert.match(await csv.text(), /Ana/);
+});

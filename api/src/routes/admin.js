@@ -1,4 +1,4 @@
-import { HttpError, json, readJson, str } from "../lib/http.js";
+import { HttpError, json, readJson, str, corsHeaders } from "../lib/http.js";
 import { requireAdmin } from "../lib/auth.js";
 import { sendMail, emailLayout, esc } from "../lib/mail.js";
 import { ESTADOS } from "./events.js";
@@ -111,6 +111,57 @@ export async function adminRoutes(request, env, urlObj, origin) {
       await env.DB.prepare("UPDATE payments SET estado='pendiente', marcado_por=NULL, paid_at=NULL WHERE id=?").bind(pay.id).run();
     }
     return json({ ok: true }, 200, origin);
+  }
+
+  if (pathname === "/api/admin/summary" && m === "GET") {
+    const one = (sql) => env.DB.prepare(sql).first().then((r) => r.n);
+    const [jugadoras, eventosAbiertos, parejas, pagosPendientes, cobrado] = await Promise.all([
+      one("SELECT COUNT(*) AS n FROM users"),
+      one("SELECT COUNT(*) AS n FROM events WHERE estado='abierto'"),
+      one("SELECT COUNT(*) AS n FROM registrations WHERE estado='confirmada'"),
+      one("SELECT COUNT(*) AS n FROM payments WHERE estado='pendiente'"),
+      one("SELECT COALESCE(SUM(monto),0) AS n FROM payments WHERE estado='pagado'"),
+    ]);
+    return json({ jugadoras, eventosAbiertos, parejas, pagosPendientes, cobrado }, 200, origin);
+  }
+
+  if (pathname === "/api/admin/users" && m === "GET") {
+    const q = `%${str(urlObj.searchParams.get("q"), 80)}%`;
+    const { results } = await env.DB.prepare(
+      `SELECT u.id, u.email, u.role, u.email_verified, u.created_at, p.nombre, p.telefono, p.categoria
+         FROM users u LEFT JOIN profiles p ON p.user_id=u.id
+        WHERE u.email LIKE ?1 OR p.nombre LIKE ?1 ORDER BY u.id DESC LIMIT 100`
+    ).bind(q).all();
+    return json(results, 200, origin);
+  }
+
+  match = pathname.match(/^\/api\/admin\/users\/(\d+)\/role$/);
+  if (match && m === "POST") {
+    const b = await readJson(request);
+    if (!["admin", "player"].includes(b.role)) throw new HttpError(400, "Rol inválido");
+    if (Number(match[1]) === admin.id) throw new HttpError(400, "No puedes cambiar tu propio rol");
+    await env.DB.prepare("UPDATE users SET role=? WHERE id=?").bind(b.role, match[1]).run();
+    return json({ ok: true }, 200, origin);
+  }
+
+  match = pathname.match(/^\/api\/admin\/events\/(\d+)\/registrations\.csv$/);
+  if (match && m === "GET") {
+    const { results } = await env.DB.prepare(
+      `SELECT r.id, r.categoria, r.estado, r.created_at,
+              p1.nombre AS n1, u1.email AS e1, p1.telefono AS t1, p2.nombre AS n2, u2.email AS e2, p2.telefono AS t2,
+              COALESCE((SELECT SUM(monto) FROM payments WHERE registration_id=r.id AND estado='pagado'),0) AS pagado
+         FROM registrations r
+         JOIN users u1 ON u1.id=r.player1_id JOIN profiles p1 ON p1.user_id=r.player1_id
+         JOIN users u2 ON u2.id=r.player2_id JOIN profiles p2 ON p2.user_id=r.player2_id
+        WHERE r.event_id=? AND r.estado!='cancelada' ORDER BY r.categoria, r.id`
+    ).bind(match[1]).all();
+    // Evita que Excel ejecute celdas que empiezan con = + - @
+    const cell = (v) => { let t = String(v ?? ""); if (/^[=+\-@]/.test(t)) t = "'" + t; return `"${t.replace(/"/g, '""')}"`; };
+    const head = ["Categoria", "Estado", "Jugadora 1", "Correo 1", "Telefono 1", "Jugadora 2", "Correo 2", "Telefono 2", "Pagado RD$", "Inscrita"];
+    const rows = results.map((r) => [r.categoria, r.estado, r.n1, r.e1, r.t1, r.n2, r.e2, r.t2, r.pagado, r.created_at].map(cell).join(","));
+    return new Response("\uFEFF" + [head.map(cell).join(","), ...rows].join("\r\n"), {
+      headers: { "Content-Type": "text/csv; charset=utf-8", "Content-Disposition": `attachment; filename="inscripciones-${match[1]}.csv"`, ...corsHeaders(origin) },
+    });
   }
 
   return null;

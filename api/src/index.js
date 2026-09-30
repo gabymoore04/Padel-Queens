@@ -4,7 +4,8 @@
 // Cuentas:   POST /api/auth/{register,login,verify,resend-verification,forgot,reset}, GET|PUT /api/me
 // Jugadora:  POST /api/events/:id/registrations, GET /api/me/registrations,
 //            POST /api/registrations/:id/{confirm,cancel,pay}
-// Admin:     /api/admin/* (requiere rol admin)
+// Contenido: GET /api/content, /api/photos, /api/partners, /media/*
+// Admin:     /api/admin/* (requiere rol admin): eventos, inscripciones, pagos, fotos, partners, textos, jugadoras
 //
 // Secretos (wrangler secret put): TOKEN_SECRET, ADMIN_EMAILS, RESEND_API_KEY
 // Variables (wrangler.toml): ALLOWED_ORIGINS, SITE_URL, MAIL_FROM
@@ -14,6 +15,8 @@ import { authRoutes } from "./routes/auth.js";
 import { eventRoutes } from "./routes/events.js";
 import { registrationRoutes } from "./routes/registrations.js";
 import { adminRoutes } from "./routes/admin.js";
+import { contentRoutes } from "./routes/content.js";
+import { mediaRoutes } from "./routes/media.js";
 
 export default {
   async fetch(request, env) {
@@ -22,7 +25,7 @@ export default {
     if (request.method === "OPTIONS") return new Response(null, { headers: corsHeaders(origin) });
 
     try {
-      for (const route of [eventRoutes, authRoutes, registrationRoutes, adminRoutes]) {
+      for (const route of [eventRoutes, contentRoutes, mediaRoutes, authRoutes, registrationRoutes, adminRoutes]) {
         const res = await route(request, env, url, origin);
         if (res) return res;
       }

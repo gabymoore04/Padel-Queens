@@ -8,6 +8,11 @@ database_name = "padelqueens-events"
 database_id = "52d74fb0-84f4-43ff-b998-dc7f7a67f1c5"
 migrations_dir = "migrations"
 
+# Fotos de la galeria y logos de partners. Crear una vez: wrangler r2 bucket create padelqueens-media
+[[r2_buckets]]
+binding = "MEDIA"
+bucket_name = "padelqueens-media"
+
 [vars]
 # Origenes permitidos para CORS, separados por coma. "*" permite cualquiera.
 # Cuando tengas dominio propio o la URL final de la web, cambialo aqui.
@@ -31,3 +36,7 @@ binding = "DB"
 database_name = "padelqueens-events-staging"
 database_id = "REEMPLAZAR_CON_ID_DE_STAGING"
 migrations_dir = "migrations"
+
+[[env.staging.r2_buckets]]
+binding = "MEDIA"
+bucket_name = "padelqueens-media-staging"
